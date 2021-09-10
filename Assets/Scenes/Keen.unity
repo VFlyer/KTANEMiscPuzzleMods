@@ -606,7 +606,7 @@ MeshFilter:
     type: 2}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 260347778}
-  m_Mesh: {fileID: 4300000, guid: ab7583a11a6e6a842a1eca2aab535ecd, type: 3}
+  m_Mesh: {fileID: 4300000, guid: 409a32031f9996d46b290ce9439d85cb, type: 3}
 --- !u!1 &304528473
 GameObject:
   m_ObjectHideFlags: 0
@@ -4315,7 +4315,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1506576947}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.015, z: 0}
+  m_LocalPosition: {x: 0, y: 0.0151, z: 0}
   m_LocalScale: {x: 0.0136, y: 0.01, z: 0.0136}
   m_Children:
   - {fileID: 1811920471}
@@ -5360,6 +5360,11 @@ Prefab:
       propertyPath: TwitchPlaysMode
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 114848120511536268, guid: 8814ea52310d2614a9feda02ec355ae4,
+        type: 2}
+      propertyPath: TwitchPlaysActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 8814ea52310d2614a9feda02ec355ae4, type: 2}
   m_IsPrefabParent: 0
@@ -6359,7 +6364,43 @@ MonoBehaviour:
   - {fileID: 673255775}
   - {fileID: 1638706131}
   - {fileID: 1783414163}
-  borderRenderers: []
+  borderRenderers:
+  - {fileID: 635206520}
+  - {fileID: 361029804}
+  - {fileID: 989281997}
+  - {fileID: 995379262}
+  - {fileID: 1924836345}
+  - {fileID: 1235552170}
+  - {fileID: 136830439}
+  - {fileID: 1480985337}
+  - {fileID: 533441203}
+  - {fileID: 844016493}
+  - {fileID: 1974489714}
+  - {fileID: 1959372274}
+  - {fileID: 2058580547}
+  - {fileID: 829368249}
+  - {fileID: 503192950}
+  - {fileID: 1912854338}
+  - {fileID: 848021633}
+  - {fileID: 2040077691}
+  - {fileID: 1612375473}
+  - {fileID: 1350829922}
+  - {fileID: 1236480701}
+  - {fileID: 393010510}
+  - {fileID: 2013514218}
+  - {fileID: 429433746}
+  - {fileID: 1985235659}
+  - {fileID: 1943638590}
+  - {fileID: 1948075195}
+  - {fileID: 30309890}
+  - {fileID: 888465086}
+  - {fileID: 1880131420}
+  - {fileID: 726834450}
+  - {fileID: 304528475}
+  - {fileID: 892809101}
+  - {fileID: 1654431809}
+  - {fileID: 663650314}
+  - {fileID: 489352103}
 --- !u!1 &2013514216
 GameObject:
   m_ObjectHideFlags: 0
