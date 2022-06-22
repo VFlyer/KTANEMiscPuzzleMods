@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 public class UniqueGridGenerator{
 
@@ -8,47 +9,59 @@ public class UniqueGridGenerator{
 	// Use this for initialization
 	public UniqueGridGenerator(int width = 6) {
 		storedGrid = new int[width, width];
-		var maxIterations = 1000000;
-		var curIterationCount = 0;
-        for (var x = 0; x < storedGrid.GetLength(1) - 1 && maxIterations > curIterationCount; x++)
+		var firstListValues = Enumerable.Range(1, width);
+
+		for (var x = 0; x < storedGrid.GetLength(1); x++)
 		{
-			var firstListValues = Enumerable.Range(1, 6).ToArray().Shuffle();
-			for (var y = 0; y < firstListValues.Length; y++)
-			{
-				storedGrid[x, y] = firstListValues[y];
-			}
-			var isUnique = true;
+			var alteredArray = firstListValues.Skip(x).Concat(firstListValues.Take(x));
 			for (var y = 0; y < storedGrid.GetLength(0); y++)
-            {
-				for (var r = x - 1; r >= 0; r--)
-				{
-					isUnique &= storedGrid[x, y] != storedGrid[r, y];
-				}
-			}
-			if (!isUnique)
 			{
-				x--;
+				storedGrid[y, x] = alteredArray.ElementAt(y);
 			}
-			curIterationCount++;
 		}
-		
-		// Fill the remaining cells with whatever is left.
-		if (curIterationCount < maxIterations)
-			for (var x = 0; x < storedGrid.GetLength(0); x++)
+
+		var idxShuffles = new int[width - 1];
+		for (var x = 0; x < idxShuffles.Length; x++)
+			idxShuffles[x] = Random.Range(x + 1, width);
+		for (var x = 0; x < storedGrid.GetLength(1); x++)
+		{
+			for (var y = 0; y < storedGrid.GetLength(0) - 1; y++)
 			{
-				var curValues = new List<int>();
-				for (var r = 0; r < storedGrid.GetLength(0) - 1; r++)
-				{
-					curValues.Add(storedGrid[r, x]);
-				}
-				storedGrid[storedGrid.GetLength(0) - 1, x] = Enumerable.Range(1, 6).Except(curValues).Single();
+				var temVal = storedGrid[y, x];
+				storedGrid[y, x] = storedGrid[idxShuffles[y], x];
+				storedGrid[idxShuffles[y], x] = temVal;
 			}
-		
+		}
+		for (var x = 0; x < idxShuffles.Length; x++)
+			idxShuffles[x] = Random.Range(x + 1, width);
+		for (var x = 0; x < storedGrid.GetLength(1) - 1; x++)
+		{
+			for (var y = 0; y < storedGrid.GetLength(0); y++)
+			{
+				var temVal = storedGrid[y, x];
+				storedGrid[y, x] = storedGrid[y, idxShuffles[x]];
+				storedGrid[y, idxShuffles[x]] = temVal;
+			}
+		}
+
 	}
 	public int[,] GetGrid()
     {
 		return storedGrid;
     }
+	public IEnumerable<int> GetGridAs1DArray()
+    {
+		var output = new int[storedGrid.GetLength(0) * storedGrid.GetLength(1)];
+        for (var x = 0; x < output.Length; x++)
+        {
+			output[x] = storedGrid[x % storedGrid.GetLength(0), x / storedGrid.GetLength(0)];
+        }
+		return output;
+    }
+	public int GetSize()
+    {
+		return storedGrid.GetLength(0) * storedGrid.GetLength(1);
+	}
 
 	public bool Equals(UniqueGridGenerator anotherGrid)
     {
