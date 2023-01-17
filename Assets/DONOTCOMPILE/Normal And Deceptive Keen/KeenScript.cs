@@ -16,6 +16,8 @@ public class KeenScript : MonoBehaviour {
 	static int modIDCnt;
 	protected int modID;
 
+	const string operSymbols = "+×-÷";
+
 	protected enum ValidityStates
     {
 		Allowed,
@@ -143,6 +145,8 @@ public class KeenScript : MonoBehaviour {
 			do
 			{
 				canIterate = false;
+				var lastCombinationSet = allCombinations.Select(a => a.ToList()).ToArray();
+
 				for (var x = 0; x < allCombinations.Length; x++)
 				{
 					var idxGroupAssociated = Enumerable.Range(0, groupedPairIdxes.Count).Single(a => groupedPairIdxes[a].Contains(x));
@@ -152,86 +156,83 @@ public class KeenScript : MonoBehaviour {
 					var curConfiguration = allCombinations[x];
 					var curNumState = ValidityStates.Allowed;
 					var specifiedDigits = new List<int>();
-					foreach (int num in curConfiguration)
-                    {
-						var uniqueNumInRow = true;
-						// Check if there is only 1 placement for that number in that row.
-						for (var delta = 1; delta < 6; delta++)
-                        {
-							if (allCombinations[(delta + curX) % maxWidth + maxWidth * curY].Contains(num))
-								uniqueNumInRow = false;
-                        }
-						if (uniqueNumInRow)
+					if (curConfiguration.Count > 1)
+						foreach (int num in curConfiguration)
 						{
-							curNumState = ValidityStates.Specific;
-							specifiedDigits.Add(num);
-							break;
-						}
-						var uniqueNumInCol = true;
-                        // Check if there is only 1 placement for that number in that column.
-                        for (var delta = 1; delta < 6; delta++)
-                        {
-							if (allCombinations[curX + maxWidth * ((curY + delta) % maxWidth)].Contains(num))
-								uniqueNumInCol = false;
-                        }
-						if (uniqueNumInCol)
-						{
-							curNumState = ValidityStates.Specific;
-							specifiedDigits.Add(num);
-							break;
-						}
-						var numInOnlyCellInRowCol = false;
-                        // Check if there is there is a number that is only present in that row or column.
-                        for (var delta = 1; delta < 6; delta++)
-                        {
-							var curCellDeltaY = allCombinations[curX + maxWidth * ((curY + delta) % maxWidth)];
-							var curCellDeltaX = allCombinations[(curX + delta) % maxWidth + maxWidth * curY];
-							if ((curCellDeltaY.Contains(num) && curCellDeltaY.Count == 1) || (curCellDeltaX.Contains(num) && curCellDeltaX.Count == 1))
-								numInOnlyCellInRowCol = true;
-                        }
-						if (numInOnlyCellInRowCol)
-						{
-							curNumState = ValidityStates.Forbidden;
-							specifiedDigits.Add(num);
-						}
-						// Now check based on the operator associated with this, and if it is possible to reach.
-						var remainingValue = valueGroup[idxGroupAssociated];
-						switch (operatorIdx[idxGroupAssociated])
-						{
-							case 0:
-								foreach (var idxPossiblity in groupedPairIdxes[idxGroupAssociated])
-									remainingValue -= allCombinations[idxPossiblity].Count == 1 ? allCombinations[idxPossiblity].Single() : 0;
-								if (remainingValue - num < groupedPairIdxes[idxGroupAssociated].Count(a => allCombinations[a].Count == 1) || remainingValue - num > 6 * groupedPairIdxes[idxGroupAssociated].Count(a => allCombinations[a].Count != 1))
-								{
-									curNumState = ValidityStates.Forbidden;
-									specifiedDigits.Add(num);
-								}
+							var uniqueNumInRowOrCol = true;
+							// Check if there is only 1 placement for that number in that row.
+							for (var delta = 1; delta < 6; delta++)
+							{
+								if (lastCombinationSet[(delta + curX) % maxWidth + maxWidth * curY].Contains(num) ||
+									lastCombinationSet[curX + maxWidth * ((curY + delta) % maxWidth)].Contains(num))
+									uniqueNumInRowOrCol = false;
+							}
+							if (uniqueNumInRowOrCol)
+							{
+								curNumState = ValidityStates.Specific;
+								specifiedDigits.Add(num);
 								break;
-							case 1:
-								foreach (var idxPossiblity in groupedPairIdxes[idxGroupAssociated])
-									remainingValue /= allCombinations[idxPossiblity].Count == 1 ? allCombinations[idxPossiblity].Single() : 1;
-								if (remainingValue / num < 1 || remainingValue % num != 0)
-								{
-									curNumState = ValidityStates.Forbidden;
-									specifiedDigits.Add(num);
-								}
-								break;
-							case 2:
-								if (!Enumerable.Range(1, maxWidth - remainingValue).Any(a => a == num || a + num == remainingValue))
-                                {
-									curNumState = ValidityStates.Forbidden;
-									specifiedDigits.Add(num);
-								}
-								break;
-							case 3:
-								if (!Enumerable.Range(1, maxWidth / remainingValue).Any(a => a == num || a * num == remainingValue))
-								{
-									curNumState = ValidityStates.Forbidden;
-									specifiedDigits.Add(num);
-								}
-								break;
+							}
+							var numInOnlyCellInRowCol = false;
+							// Check if there is there is a number that is only present in that row or column.
+							for (var delta = 1; delta < 6; delta++)
+							{
+								var curCellDeltaY = lastCombinationSet[curX + maxWidth * ((curY + delta) % maxWidth)];
+								var curCellDeltaX = lastCombinationSet[(curX + delta) % maxWidth + maxWidth * curY];
+								if ((curCellDeltaY.Contains(num) && curCellDeltaY.Count == 1) ||
+									(curCellDeltaX.Contains(num) && curCellDeltaX.Count == 1))
+									numInOnlyCellInRowCol = true;
+							}
+							if (numInOnlyCellInRowCol)
+							{
+								curNumState = ValidityStates.Forbidden;
+								specifiedDigits.Add(num);
+							}
+							// Now check based on the operator associated with this, and if it is possible to reach.
+							var remainingValue = valueGroup[idxGroupAssociated];
+							switch (operatorIdx[idxGroupAssociated])
+							{
+								case 0:
+									foreach (var idxPossiblity in groupedPairIdxes[idxGroupAssociated])
+										remainingValue -= lastCombinationSet[idxPossiblity].Count == 1 ? lastCombinationSet[idxPossiblity].Single() : 0;
+									if (remainingValue - num < (groupedPairIdxes[idxGroupAssociated].Count(a => lastCombinationSet[a].Count != 1) - 1)
+										|| remainingValue - num > 6 * (groupedPairIdxes[idxGroupAssociated].Count(a => lastCombinationSet[a].Count != 1) - 1))
+									{
+										curNumState = ValidityStates.Forbidden;
+										specifiedDigits.Add(num);
+									}
+									break;
+								case 1:
+									var limitVal = 1;
+									foreach (var idxPossiblity in groupedPairIdxes[idxGroupAssociated])
+										if (lastCombinationSet[idxPossiblity].Count == 1)
+											remainingValue /= lastCombinationSet[idxPossiblity].Single();
+										else if (idxPossiblity != x)
+											limitVal *= 6;
+									if (remainingValue < num ||
+										remainingValue % num != 0 || // If the number is not divisible by the remaining value
+										!GetDistinctProducts(groupedPairIdxes.Count(a => a.Count != 1) - 1).Contains(remainingValue))
+									{
+										curNumState = ValidityStates.Forbidden;
+										specifiedDigits.Add(num);
+									}
+									break;
+								case 2:
+									if (!Enumerable.Range(1, maxWidth - remainingValue).Any(a => a == num || a + num == remainingValue))
+									{
+										curNumState = ValidityStates.Forbidden;
+										specifiedDigits.Add(num);
+									}
+									break;
+								case 3:
+									if (!Enumerable.Range(1, maxWidth / remainingValue).Any(a => a == num || a * num == remainingValue))
+									{
+										curNumState = ValidityStates.Forbidden;
+										specifiedDigits.Add(num);
+									}
+									break;
+							}
 						}
-					}
 					if (curNumState == ValidityStates.Specific)
 					{
 						var lastCnt = curConfiguration.Count;
@@ -240,8 +241,9 @@ public class KeenScript : MonoBehaviour {
 					}
 					else if (curNumState == ValidityStates.Forbidden)
                     {
+						var lastCnt = curConfiguration.Count;
 						curConfiguration.RemoveAll(a => specifiedDigits.Contains(a));
-						canIterate = true;
+						canIterate = lastCnt != curConfiguration.Count;
 					}
 				}
 
@@ -251,7 +253,7 @@ public class KeenScript : MonoBehaviour {
 			solvableUnique = allCombinations.All(a => a.Count == 1);
 			curIterCount++;
 		}
-		while (!solvableUnique && curIterCount < 32);
+		while (!solvableUnique && curIterCount < 64);
 
 		Debug.LogFormat("[{0}]",groupedPairIdxes.Select(a => a.OrderBy(b => b).Join(",")).Join("];["));
 
@@ -306,13 +308,40 @@ public class KeenScript : MonoBehaviour {
 			var curGroup = groupedPairIdxes[x].OrderBy(a => a);
 			for (var y = 0; y < curGroup.Count(); y++)
 			{
-				clueText[curGroup.ElementAt(y)].text = y == 0 ? string.Format("{0}{1}", valueGroup[x], "+*-/"[operatorIdx[x]]) : "";
+				clueText[curGroup.ElementAt(y)].text = y == 0 ? string.Format("{0}{1}", valueGroup[x], operSymbols[operatorIdx[x]]) : "";
 			}
 		}
         Debug.LogFormat("[{0}]", groupedPairIdxes.Select(a => a.OrderBy(b => b).Select(b => displayedValues[b % maxWidth, b / maxWidth]).Join(",")).Join("];["));
 		Debug.LogFormat("[{0}]", valueGroup.Join("],["));
-		Debug.LogFormat("[{0}]", operatorIdx.Select(a => "+*-/"[a]).Join("],["));
+		Debug.LogFormat("[{0}]", operatorIdx.Select(a => operSymbols[a]).Join("],["));
 	}
+	List<IEnumerable<int>> distinctProducts = new List<IEnumerable<int>> { Enumerable.Empty<int>(), Enumerable.Range(1, 6) };
+	protected IEnumerable<int> GetDistinctProducts(int possibleFactors)
+    {
+		if (possibleFactors < 0)
+			return distinctProducts.First();
+		if (distinctProducts.Count > possibleFactors)
+			return distinctProducts[possibleFactors];
+
+		
+		while (distinctProducts.Count < possibleFactors)
+        {
+			var newProducts = new List<int>();
+
+			var lastCompletePducrotList = distinctProducts.Last();
+			foreach (int lastDistProduct in lastCompletePducrotList)
+            {
+				foreach (int oneFactor in distinctProducts[1])
+                {
+					var curProduct = oneFactor * lastDistProduct;
+					if (!newProducts.Contains(curProduct))
+						newProducts.Add(curProduct);
+                }
+            }
+			distinctProducts.Add(newProducts);
+		}
+		return distinctProducts.Last();
+    }
 	protected int ObtainGCM(int numA, params int[] numsB)
 	{
 		var output = numA;

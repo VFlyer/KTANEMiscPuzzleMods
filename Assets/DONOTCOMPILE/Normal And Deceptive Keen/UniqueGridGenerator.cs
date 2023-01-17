@@ -45,6 +45,32 @@ public class UniqueGridGenerator{
 		}
 
 	}
+	public void Shuffle()
+    {
+		var idxShuffles = new int[storedGrid.Length];
+		for (var x = 0; x < idxShuffles.Length; x++)
+			idxShuffles[x] = Random.Range(x + 1, storedGrid.Length);
+		for (var x = 0; x < storedGrid.GetLength(1); x++)
+		{
+			for (var y = 0; y < storedGrid.GetLength(0) - 1; y++)
+			{
+				var temVal = storedGrid[y, x];
+				storedGrid[y, x] = storedGrid[idxShuffles[y], x];
+				storedGrid[idxShuffles[y], x] = temVal;
+			}
+		}
+		for (var x = 0; x < idxShuffles.Length; x++)
+			idxShuffles[x] = Random.Range(x + 1, storedGrid.Length);
+		for (var x = 0; x < storedGrid.GetLength(1) - 1; x++)
+		{
+			for (var y = 0; y < storedGrid.GetLength(0); y++)
+			{
+				var temVal = storedGrid[y, x];
+				storedGrid[y, x] = storedGrid[y, idxShuffles[x]];
+				storedGrid[y, idxShuffles[x]] = temVal;
+			}
+		}
+	}
 	public int[,] GetGrid()
     {
 		return storedGrid;
