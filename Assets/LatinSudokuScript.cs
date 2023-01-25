@@ -6,27 +6,17 @@ using UnityEngine;
 
 public class LatinSudokuScript : MonoBehaviour {
 
-	[SerializeField]
-	private KMAudio mAudio;
-	[SerializeField]
-	private KMBombModule modSelf;
-	[SerializeField]
-	private KMSelectable[] axisSelectables, inputSelectables;
+	public KMAudio mAudio;
+	public KMBombModule modSelf;
+	public KMSelectable[] axisSelectables, inputSelectables;
 
-	[SerializeField]
-	private MeshRenderer[] gridRenderers, selectSolidRenderers;
-	[SerializeField]
-	private MeshRenderer[] ringRenderers, miscRingRenderers;
-	[SerializeField]
-	private MeshRenderer selectHLRenderer;
-	[SerializeField]
-	private TextMesh[] displayValues;
-	[SerializeField]
-	private Mesh[] meshes;
-	[SerializeField]
-	private Vector3[] meshScaleFactors;
-	[SerializeField]
-	private Material[] meshMats;
+	public MeshRenderer[] gridRenderers, selectSolidRenderers;
+	public MeshRenderer[] ringRenderers, miscRingRenderers;
+	public MeshRenderer selectHLRenderer;
+	public TextMesh[] displayValues;
+	public Mesh[] meshes;
+	public Vector3[] meshScaleFactors;
+	public Material[] meshMats;
 
 	int curXIdx, curZIdx, curYIdx, idxViewMode;
 	private static readonly float[] xAxisVals = new[] { -0.0477f, -0.016f, 0.016f, 0.0477f },
@@ -37,6 +27,8 @@ public class LatinSudokuScript : MonoBehaviour {
 	static int modIDCnt;
 	int moduleID;
 	bool interactable = true, moduleSolved = false, holdingSolid = false;
+	[SerializeField]
+	bool generateExample = false;
 
 	int[] finalGrid, currentGrid;
 	bool[] lockPlacements;
@@ -44,15 +36,18 @@ public class LatinSudokuScript : MonoBehaviour {
 
 	void QuickLog(string toLog, params object[] args)
     {
-		Debug.LogFormat("[Latin Sudoku #{0}] {1}", moduleID, string.Format(toLog, args));
+		Debug.LogFormat("[{0} #{1}] {2}", modSelf.ModuleDisplayName, moduleID, string.Format(toLog, args));
     }
 	// Use this for initialization
 	void Start () {
 		moduleID = ++modIDCnt;
-		//GenerateSolutionBoard();
-		GenerateExampleBoard();
+		if (generateExample)
+			GenerateExampleBoard();
+		else
+			GenerateSolutionBoard();
 
-        for (var x = 0; x < inputSelectables.Length; x++)
+
+		for (var x = 0; x < inputSelectables.Length; x++)
         {
 			var y = x + 1;
 			inputSelectables[x].OnInteract += delegate {
@@ -76,6 +71,8 @@ public class LatinSudokuScript : MonoBehaviour {
 					HandleMovementPress(y);
 				return false;
 			};
+			axisSelectables[x].OnInteractEnded += delegate {
+			};
         }
 		for (var x = 0; x < gridRenderers.Length; x++)
 			StartCoroutine(SpinObject(Random.insideUnitSphere * 60, gridRenderers[x].transform));
@@ -92,19 +89,25 @@ public class LatinSudokuScript : MonoBehaviour {
 		yield break;
     }
 
-	/*
+	
 	void OnDestroy()
     {
 		if (!moduleSolved)
         {
-			QuickLog("Unsolved grid upon detonation/exiting:");
+			QuickLog("Unsolved grid upon detonation/abandoning:");
 			LogGrid(currentGrid);
         }
     }
-	*/
+	
 	void HandleResetBoard()
     {
 		if (moduleSolved || !interactable) return;
+
+		if (Enumerable.Range(0, 64).Where(a => !lockPlacements[a]).Any(a => a != 0))
+		{
+			QuickLog("Non-initial grid before reset:");
+			LogGrid(currentGrid);
+		}
 		var countNoise = 0;
 		for (var x = 0; x < currentGrid.Length; x++)
 		{
@@ -122,6 +125,7 @@ public class LatinSudokuScript : MonoBehaviour {
 	void HandleMovementPress(int idx)
     {
 		var expectedTransform = axisSelectables[idx].transform;
+		axisSelectables[idx].AddInteractionPunch(0.1f);
 		switch (idx)
         {
 			case 2:
@@ -198,7 +202,7 @@ public class LatinSudokuScript : MonoBehaviour {
         for (var x = 0; x < ringRenderers.Length; x++)
 			ringRenderers[x].material.color = moduleSolved ? Color.yellow : curValPos == x + 1 ? lockPlacements[idxCurPos] ? Color.gray : Color.yellow : Color.black;
         for (var x = 0; moduleSolved && x < miscRingRenderers.Length; x++)
-			miscRingRenderers[x].material.color = Color.yellow;
+			miscRingRenderers[x].material.color = Color.black;
 	}
 	void LogGrid(int[] values)
     {
@@ -229,7 +233,6 @@ public class LatinSudokuScript : MonoBehaviour {
 	 * 56	57	58	59
 	 * 60	61	62	63
 	 *
-	 * Note that the module will generated it on Z,X,Y, rather than the specified.
 	 */
 	void GenerateExampleBoard()
     {
@@ -352,7 +355,7 @@ public class LatinSudokuScript : MonoBehaviour {
 				newCombinationsLeft[idx].Remove(currentPossibilities.Single());
 		}
 		var multiFilledCellsIdxes = Enumerable.Range(0, 64).Where(a => combinationsCollapse.ElementAt(a).Count() > 1); // An idx list of all cells that have more than 1 combination.
-		// Naked Singles.
+		// Last possible value within given region, known as Naked Singles.
 		foreach (var x in multiFilledCellsIdxes)
 		{
 			var currentPossibilities = combinationsCollapse.ElementAt(x); // The current combination set for that index.
@@ -370,11 +373,6 @@ public class LatinSudokuScript : MonoBehaviour {
 			var RemainingXZBox = CurXZBox.Where(a => a != x);
 			var RemainingXYBox = CurXYBox.Where(a => a != x);
 			var RemainingYZBox = CurYZBox.Where(a => a != x);
-
-			var mergedCombinationIdxes = RemainingXGroup.Union(RemainingYGroup)
-				.Union(RemainingZGroup).Union(RemainingXZBox)
-				.Union(RemainingXYBox).Union(RemainingYZBox);
-			// A merged index of all the mentioned items.
 			foreach (var value in currentPossibilities)
 			{
 				if (!RemainingXGroup.Any(a => combinationsCollapse.ElementAt(a).Contains(value)) ||
@@ -385,18 +383,43 @@ public class LatinSudokuScript : MonoBehaviour {
 					!RemainingYZBox.Any(a => combinationsCollapse.ElementAt(a).Contains(value))) // Basically, if there is no other combinations left within any of these regions for that value...
 				{
 					newCombinationsLeft[x].RemoveAll(a => a != value); // Remove other possibilities of this value...
-					foreach (int idx in mergedCombinationIdxes)
-						newCombinationsLeft[idx].Remove(currentPossibilities.Single());
 					break;
 				}
 			}
 		}
-		return Enumerable.Range(0, newCombinationsLeft.Count).All(a => newCombinationsLeft[a].SequenceEqual(combinationsCollapse.ElementAt(a))) ? combinationsCollapse : CollapseGrid(newCombinationsLeft);
+		
+		// Naked Pairs.
+		var allGroups = groupedIdxesX.Concat(groupedIdxesY).Concat(groupedIdxesZ).Concat(groupedIdxesYZBox).Concat(groupedIdxesXYBox).Concat(groupedIdxesXZBox);
+		foreach (var grouping in allGroups)
+        {
+			for (var idx1 = 0; idx1 < 3; idx1++)
+            {
+				var possibleDigits1 = combinationsCollapse.ElementAt(grouping[idx1]);
+				for (var idx2 = idx1 + 1; idx2 < 4; idx2++)
+                {
+					var exemptIdxValues = Enumerable.Range(0, 4).Where(a => idx1 != a && a != idx2).ToArray();
+					var possibleDigits2 = combinationsCollapse.ElementAt(grouping[idx2]);
+					var unionedSets = possibleDigits1.Union(possibleDigits2);
+					// There are a couple ways to approach this, one way is to check if the union of the 2 sets have 2 numbers, and the sets have 2 possibilities.
+					// Another way is to check if those 2 cells have exactly those combinations left.
+					if (possibleDigits1.OrderBy(a => a).SequenceEqual(possibleDigits2.OrderBy(b => b)) && possibleDigits1.Count == 2 && possibleDigits2.Count == 2)
+                    {
+						// If it does... Remove the other possibilities from the other tiles within that group.
+						foreach (var idxVoid in exemptIdxValues)
+							newCombinationsLeft[grouping[idxVoid]].RemoveAll(a => unionedSets.Contains(a));
+                    }
+
+				}
+			}
+        }
+		
+		return Enumerable.Range(0, 64).All(a => newCombinationsLeft[a].SequenceEqual(combinationsCollapse.ElementAt(a))) ? combinationsCollapse : CollapseGrid(newCombinationsLeft);
+		// If all 64 cells have the same possibility after applying the combinations, stop here.
     }
 
 	void GenerateSolutionBoard()
     {
-		var possibleDigits = new List<int>[64];
+		var possibleDigitsPrecollapse = new List<int>[64];
 		finalGrid = new int[64];
 		currentGrid = new int[64];
 		lockPlacements = new bool[64];
@@ -404,49 +427,62 @@ public class LatinSudokuScript : MonoBehaviour {
 		var idxInputs = new List<int>();
 		var digitsPlaced = new List<int>();
 		var prioritizedIdxesCollapse = Enumerable.Range(0, 64).ToList();
+		var retryCount = 0;
 	fullRetryGen:
 		idxInputs.Clear();
 		digitsPlaced.Clear();
-		for (var x = 0; x < possibleDigits.Length; x++) // Start by filling every single option available on the module.
+		for (var x = 0; x < possibleDigitsPrecollapse.Length; x++) // Start by filling every single option available on the module.
 		{
-			if (possibleDigits[x] == null)
-				possibleDigits[x] = new List<int>();
-			possibleDigits[x].Clear();
-			possibleDigits[x].AddRange(Enumerable.Range(1, 4));
+			if (possibleDigitsPrecollapse[x] == null)
+				possibleDigitsPrecollapse[x] = new List<int>();
+			possibleDigitsPrecollapse[x].Clear();
+			possibleDigitsPrecollapse[x].AddRange(Enumerable.Range(1, 4));
 		}
 		var iterCount = 0;
 		prioritizedIdxesCollapse.Shuffle();
+		var possibleDigitsPostCollapse = possibleDigitsPrecollapse.Select(a => a.ToList()).ToArray();
 	iterate:
 		iterCount++;
-		
+
+		var filteredIdxesToCollapse = prioritizedIdxesCollapse.Where(a => possibleDigitsPostCollapse[a].Count > 1);
 		//scan:
-		// Pick a random cell that has the fewest amount of options, (not 1, not 0) and create a value from that.
-		var possibleIdxes = Enumerable.Range(0, 64).Where(a => possibleDigits.Min(b => b.Count) >= possibleDigits[a].Count && possibleDigits[a].Count > 1);
-		if (!possibleIdxes.Any())
+		if (!filteredIdxesToCollapse.Any())
+		{
+			retryCount++;
 			goto fullRetryGen;
+		}
 		else
 		{
-			var pickedIdx = possibleIdxes.PickRandom();
-			var pickedDigit = possibleDigits[pickedIdx].PickRandom();
+			var pickedIdx = filteredIdxesToCollapse.First();
+			var pickedDigit = possibleDigitsPostCollapse[pickedIdx].PickRandom();
 
 			idxInputs.Add(pickedIdx);
 			digitsPlaced.Add(pickedDigit);
 
-			possibleDigits[pickedIdx].RemoveAll(a => a != pickedDigit);
+			possibleDigitsPostCollapse[pickedIdx].RemoveAll(a => a != pickedDigit);
 		}
-
-		
-
+		possibleDigitsPostCollapse = CollapseGrid(possibleDigitsPostCollapse).ToArray();
 
 
-		if (possibleDigits.Any(a => !a.Any())) // If there are no other options for one of the cells, restart the entire generation.
+
+
+		if (possibleDigitsPostCollapse.Any(a => !a.Any()))
 		{
-			//collapseFirst = true;
+			retryCount++;
 			goto fullRetryGen;
 		}
-		else if (!possibleDigits.All(a => a.Count() == 1) && iterCount < 128)
+		// If there are no other options for one of the cells, restart the entire generation.
+		else if (!possibleDigitsPostCollapse.All(a => a.Count() == 1) && iterCount < 128)
 			goto iterate;
-		QuickLog("Solution grid:");
+		// If there isn't 1 option left, keep selecting until one of two things happen: An unsolvable board is created, or all of the cells have 1 possibility.
+		finalGrid = possibleDigitsPostCollapse.Select(a => a.Single()).ToArray();
+        for (var x = 0; x < idxInputs.Count; x++)
+        {
+            lockPlacements[idxInputs[x]] = true;
+            currentGrid[idxInputs[x]] = digitsPlaced[x];
+        }
+		UpdateBoard();
+		QuickLog("Solution grid after {0} iteration(s) and {1} failed attempt(s):", iterCount, retryCount);
 		LogGrid(finalGrid);
 		QuickLog("Initial grid:");
 		LogGrid(currentGrid);
@@ -466,13 +502,14 @@ public class LatinSudokuScript : MonoBehaviour {
 	//twitch plays
 	private float _tpSpeed = 0.1f;
 #pragma warning disable 414
-	private readonly string TwitchHelpMessage = @"!{0} x/y/z/m [Presses the specified coordinate/planar view button(s)] | !{0} t/h/o/d [Presses the buttons representing tetrahedron, cube, octahedreon, dodecrahedron] | Previous mentioned commands may be chained, for example '!{0} xxymh dozyt' | !{0} setspeed 0.2 [Set a press speed between 0 and 1 seconds.]";
+	private readonly string TwitchHelpMessage = "\"!{0} x/y/z/m\" [Presses the specified coordinate/planar view button(s)] | \"!{0}\" t/h/o/d [Presses the buttons representing tetrahedron, cube, octahedreon, dodecrahedron] | Previous mentioned commands may be chained, for example \"!{0} xxymh dozyt\" | \"!{0} setspeed 0.2\" [Set a press speed between 0 and 1 seconds.] | \"!{0} reset/clear\" [Clears all, excluding initial cells.]";
 #pragma warning restore 414
 	IEnumerator ProcessTwitchCommand(string command)
 	{
 		var parameters = command.ToLowerInvariant().Split(' ');
-		var m = Regex.Match(command, @"^\s*setspeed\s\d+(\.\d+)*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-		if (m.Success)
+		var regexSpeed = Regex.Match(command, @"^\s*setspeed\s\d+(\.\d+)*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+		var regexReset = Regex.Match(command, @"^reset$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+		if (regexSpeed.Success)
 		{
 			if (parameters.Length != 2)
 				yield break;
@@ -487,14 +524,24 @@ public class LatinSudokuScript : MonoBehaviour {
 			yield return "sendtochat Latin Hypercube's press speed has been set to " + parameters[1];
 			yield break;
 		}
-		var chars = "xyzmthod ";
+		else if (regexReset.Success)
+        {
+			var idxCurPos = curZIdx + 4 * curYIdx + 16 * curXIdx;
+			var selectedInputIdx = Enumerable.Range(0, 4).Where(a => a != finalGrid[idxCurPos]).PickRandom();
+			yield return null;
+			inputSelectables[selectedInputIdx].OnInteract();
+			yield return new WaitUntil(delegate { return timeHeld > 1.75f; });
+			inputSelectables[selectedInputIdx].OnInteractEnded();
+
+		}
+		var allowedChars = "xyzmthod ";
 		var list = new List<int>();
-		for (int i = 0; i < command.Length; i++)
+		foreach (char chrPress in command.ToLowerInvariant())
 		{
-			int ix = chars.IndexOf(command[i]);
+			int ix = allowedChars.IndexOf(chrPress);
 			if (ix == -1)
 				yield break;
-			if (ix == 8)
+			if (ix == 8 || char.IsWhiteSpace(chrPress))
 				continue;
 			list.Add(ix);
 		}
@@ -503,6 +550,7 @@ public class LatinSudokuScript : MonoBehaviour {
 		for (int i = 0; i < list.Count; i++)
 		{
 			buttons.ElementAt(list[i]).OnInteract();
+			buttons.ElementAt(list[i]).OnInteractEnded();
 			yield return new WaitForSeconds(_tpSpeed);
 		}
 	}
@@ -511,13 +559,13 @@ public class LatinSudokuScript : MonoBehaviour {
 		while (!currentGrid.SequenceEqual(finalGrid))
         {
 			var shuffledIdxes = Enumerable.Range(0, 3).ToArray().Shuffle();
-			for (var x = 0; x < 4; x++)
+			for (var x = 0; x < 4 && !moduleSolved; x++)
 			{
-				for (var y = 0; y < 4; y++)
+				for (var y = 0; y < 4 && !moduleSolved; y++)
 				{
-					for (var z = 0; z < 4; z++)
+					for (var z = 0; z < 4 && !moduleSolved; z++)
 					{
-						var idxCurPos = 16 * curZIdx + 4 * curYIdx + curXIdx;
+						var idxCurPos = curZIdx + 4 * curYIdx + 16 * curXIdx;
 						if (currentGrid[idxCurPos] != finalGrid[idxCurPos])
 						{
 							inputSelectables[finalGrid[idxCurPos] - 1].OnInteract();
