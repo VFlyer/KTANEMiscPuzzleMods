@@ -521,7 +521,7 @@ public class LatinSudokuScript : MonoBehaviour {
 			}
 			yield return null;
 			_tpSpeed = tempSpeed;
-			yield return "sendtochat Latin Hypercube's press speed has been set to " + parameters[1];
+			yield return "sendtochat Actual 4x4x4 Sudoku's press speed has been set to " + parameters[1];
 			yield break;
 		}
 		else if (regexReset.Success)
