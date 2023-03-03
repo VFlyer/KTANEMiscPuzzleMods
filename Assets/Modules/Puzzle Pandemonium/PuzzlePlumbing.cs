@@ -202,12 +202,12 @@ public class PuzzlePlumbing : PuzzleGeneric {
 
     public override IEnumerable<int> GetCurrentBoard()
     {
-        return accessibleDirections.Select(a => Enumerable.Range(0, 4).Reverse().Sum(b => 1 << b * (a[b] ? 1 : 0)));
+        return accessibleDirections.Select(a => Enumerable.Range(0, 4).Reverse().Sum(b => (a[b] ? 1 : 0) << b));
     }
 
     public override IEnumerable<int> GetSolutionBoard()
     {
-        return solvedDirections.Select(a => Enumerable.Range(0, 4).Reverse().Sum(b => 1 << b * (a[b] ? 1 : 0)));
+        return solvedDirections.Select(a => Enumerable.Range(0, 4).Reverse().Sum(b => (a[b] ? 1 : 0) << b));
     }
 
 }

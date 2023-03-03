@@ -11,10 +11,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 615501dbe4f3fe94fbf4b564abb10237, type: 3}
   m_Name: ModConfig
   m_EditorClassIdentifier: 
-  id: keenModpack
-  title: Keen
+  id: VFlyerMiscPuzzlesMod
+  title: Flyer's Misc. Puzzles
   author: VFlyer
-  description: 'Determine the correct '
-  version: 
+  description: 'A collection of 2 puzzle oriented modules developed by VFlyer.
+
+    [i]If he were to make puzzles in his life, maybe this would be his first idea.[/i]
+
+    Modules in this pack:
+
+    Actual 4x4x4 Sudoku (Inspired by Aaron F. Bianchi''s Actual 3D Sudoku, original
+    visuals by SpeakingEvil)
+
+    Puzzle Pandemonium (Module idea by Deaf)'
+  version: 1.0
   outputFolder: build
   previewImage: {fileID: 0}

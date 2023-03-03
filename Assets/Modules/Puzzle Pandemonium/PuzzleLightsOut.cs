@@ -17,7 +17,7 @@ public class PuzzleLightsOut : PuzzleGeneric {
     public override void DisplayCurrentBoard()
     {
         base.DisplayCurrentBoard();
-        for (var x = 0; x < usedRenderers.Length; x++)
+        for (var x = 0; x < 16; x++)
             usedRenderers[x].material.color = lightStates[x] ? Color.white : Color.black;
     }
     public override void ShuffleCurrentBoard()

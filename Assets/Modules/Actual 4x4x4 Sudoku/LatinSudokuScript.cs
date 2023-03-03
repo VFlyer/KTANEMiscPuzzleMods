@@ -9,7 +9,7 @@ public class LatinSudokuScript : MonoBehaviour {
 	public KMAudio mAudio;
 	public KMBombModule modSelf;
 	public KMSelectable[] axisSelectables, inputSelectables;
-
+	public AdjustedCubeDottedRenderer cubeDotRenderer;
 	public MeshRenderer[] gridRenderers, selectSolidRenderers;
 	public MeshRenderer[] ringRenderers, miscRingRenderers;
 	public MeshRenderer selectHLRenderer;
@@ -17,16 +17,17 @@ public class LatinSudokuScript : MonoBehaviour {
 	public Mesh[] meshes;
 	public Vector3[] meshScaleFactors;
 	public Material[] meshMats;
+	public Transform floatingCubeBase;
 
 	int curXIdx, curZIdx, curYIdx, idxViewMode;
-	private static readonly float[] xAxisVals = new[] { -0.0477f, -0.016f, 0.016f, 0.0477f },
-		yAxisVals = new[] { -0.0442f, -0.0148f, 0.0172f, 0.047f },
-		zAxisVals = new[] { 0.048f, 0.016f, -0.016f, -0.048f };
+	private static readonly float[] xAxisVals = new[] { -0.9f, -0.3f, 0.3f, 0.9f },
+		yAxisVals = new[] { -0.9f, -0.3f, 0.3f, 0.9f },
+		zAxisVals = new[] { 0.9f, 0.3f, -0.3f, -0.9f };
 
 
 	static int modIDCnt;
 	int moduleID;
-	bool interactable = true, moduleSolved = false, holdingSolid = false;
+	bool interactable = true, moduleSolved = false, holdingSolid = false, autoRotate = false;
 	[SerializeField]
 	bool generateExample = false;
 
@@ -78,7 +79,22 @@ public class LatinSudokuScript : MonoBehaviour {
 			StartCoroutine(SpinObject(Random.insideUnitSphere * 60, gridRenderers[x].transform));
 		for (var x = 0; x < selectSolidRenderers.Length; x++)
 			StartCoroutine(SpinObject(Random.insideUnitSphere * 60, selectSolidRenderers[x].transform));
+		StartCoroutine(EaseTransformModifierInfinitely(floatingCubeBase, Vector3.up * 0.001f));
 	}
+	IEnumerator EaseTransformModifierInfinitely(Transform affectedObject, Vector3 offset)
+    {
+		var storedLocalPos = affectedObject.localPosition;
+		while (enabled)
+        {
+			for (float t = 0; t < 2f; t += Time.deltaTime)
+            {
+				yield return null;
+				var curEase = Easing.InOutSine(t, 0f, 2f, 1f);
+				affectedObject.localPosition = Vector3.LerpUnclamped(storedLocalPos, storedLocalPos + offset, curEase);
+            }
+        }
+    }
+
 	IEnumerator SpinObject(Vector3 rotationSpeed, Transform affectedObject)
     {
 		while (enabled)
@@ -92,6 +108,7 @@ public class LatinSudokuScript : MonoBehaviour {
 	
 	void OnDestroy()
     {
+		StopAllCoroutines();
 		if (!moduleSolved)
         {
 			QuickLog("Unsolved grid upon detonation/abandoning:");
@@ -203,6 +220,9 @@ public class LatinSudokuScript : MonoBehaviour {
 			ringRenderers[x].material.color = moduleSolved ? Color.yellow : curValPos == x + 1 ? lockPlacements[idxCurPos] ? Color.gray : Color.yellow : Color.black;
         for (var x = 0; moduleSolved && x < miscRingRenderers.Length; x++)
 			miscRingRenderers[x].material.color = Color.black;
+		cubeDotRenderer.ChangeIdxPos(curZIdx, curYIdx, 3 - curXIdx);
+		var allPossibleModes = new[] { AdjustedCubeDottedRenderer.Axis.None, AdjustedCubeDottedRenderer.Axis.X, AdjustedCubeDottedRenderer.Axis.Y, AdjustedCubeDottedRenderer.Axis.Z, };
+		cubeDotRenderer.RenderByAxis(allPossibleModes[idxViewMode]);
 	}
 	void LogGrid(int[] values)
     {
@@ -500,16 +520,57 @@ public class LatinSudokuScript : MonoBehaviour {
         }
 	}
 	//twitch plays
+	IEnumerator HandleAutoRotate()
+    {
+		var lastStoredValue = 0;
+		while (autoRotate)
+        {
+			yield return null;
+			if (lastStoredValue != idxViewMode)
+            {
+				lastStoredValue = idxViewMode;
+				yield return RotateNextSide(lastStoredValue);
+            }
+        }
+		if (floatingCubeBase.localEulerAngles != Vector3.zero)
+			yield return RotateNextSide(0);
+		yield break;
+    }
+	IEnumerator RotateNextSide(int idx)
+    {
+		var possibleRotations = new[] { Quaternion.Euler(0, 0, 0), Quaternion.Euler(0, 0, 90), Quaternion.Euler(0, 0, 0), Quaternion.Euler(90, 0, 0) };
+		var lastRotation = floatingCubeBase.localRotation;
+		var nextRotation = possibleRotations.ElementAt(idx);
+		for (float t = 0;t < 1f;t += Time.deltaTime * 2)
+        {
+			yield return null;
+			floatingCubeBase.localRotation = Quaternion.LerpUnclamped(lastRotation, nextRotation, t);
+        }
+		floatingCubeBase.localRotation = nextRotation;
+		yield break;
+    }
+
+
 	private float _tpSpeed = 0.1f;
 #pragma warning disable 414
-	private readonly string TwitchHelpMessage = "\"!{0} x/y/z/m\" [Presses the specified coordinate/planar view button(s)] | \"!{0}\" t/h/o/d [Presses the buttons representing tetrahedron, cube, octahedreon, dodecrahedron] | Previous mentioned commands may be chained, for example \"!{0} xxymh dozyt\" | \"!{0} setspeed 0.2\" [Set a press speed between 0 and 1 seconds.] | \"!{0} reset/clear\" [Clears all, excluding initial cells.]";
+	private readonly string TwitchHelpMessage = "\"!{0} x/y/z/m\" [Presses the specified coordinate/planar view button(s)] | \"!{0}\" t/h/o/d [Presses the buttons representing tetrahedron, cube, octahedreon, dodecrahedron] | Previous mentioned commands may be chained, for example \"!{0} xxymh dozyt\" | \"!{0} setspeed 0.2\" [Set a press speed between 0 and 1 seconds.] | \"!{0} reset/clear\" [Clears all, excluding initial cells.] | \"!{0} autorotate\" [Toggles automatic rotation of the cube to view specific faces.]";
 #pragma warning restore 414
 	IEnumerator ProcessTwitchCommand(string command)
 	{
 		var parameters = command.ToLowerInvariant().Split(' ');
 		var regexSpeed = Regex.Match(command, @"^\s*setspeed\s\d+(\.\d+)*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 		var regexReset = Regex.Match(command, @"^reset$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-		if (regexSpeed.Success)
+		var regexAutoRotate = Regex.Match(command, @"^autorotate$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+		if (regexAutoRotate.Success)
+        {
+			yield return null;
+			autoRotate ^= true;
+			if (autoRotate)
+				StartCoroutine(HandleAutoRotate());
+			yield return string.Format("sendtochat I have now {0} automatic rotation on the module.{1}", autoRotate ? "activated" : "deactivated", autoRotate ? " Be aware of your perception when using this." : "");
+			yield break;
+        }
+		else if (regexSpeed.Success)
 		{
 			if (parameters.Length != 2)
 				yield break;
@@ -532,7 +593,7 @@ public class LatinSudokuScript : MonoBehaviour {
 			inputSelectables[selectedInputIdx].OnInteract();
 			yield return new WaitUntil(delegate { return timeHeld > 1.75f; });
 			inputSelectables[selectedInputIdx].OnInteractEnded();
-
+			yield break;
 		}
 		var allowedChars = "xyzmthod ";
 		var list = new List<int>();
