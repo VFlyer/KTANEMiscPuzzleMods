@@ -34,7 +34,7 @@ public class LatinSudokuScript : MonoBehaviour {
 	int[] finalGrid, currentGrid;
 	bool[] lockPlacements;
 	float timeHeld;
-
+	Coroutine floatingCubeHandler;
 	void QuickLog(string toLog, params object[] args)
     {
 		Debug.LogFormat("[{0} #{1}] {2}", modSelf.ModuleDisplayName, moduleID, string.Format(toLog, args));
@@ -79,7 +79,7 @@ public class LatinSudokuScript : MonoBehaviour {
 			StartCoroutine(SpinObject(Random.insideUnitSphere * 60, gridRenderers[x].transform));
 		for (var x = 0; x < selectSolidRenderers.Length; x++)
 			StartCoroutine(SpinObject(Random.insideUnitSphere * 60, selectSolidRenderers[x].transform));
-		StartCoroutine(EaseTransformModifierInfinitely(floatingCubeBase, Vector3.up * 0.001f));
+		floatingCubeHandler = StartCoroutine(EaseTransformModifierInfinitely(floatingCubeBase, Vector3.up * 0.001f));
 	}
 	IEnumerator EaseTransformModifierInfinitely(Transform affectedObject, Vector3 offset)
     {
@@ -93,7 +93,37 @@ public class LatinSudokuScript : MonoBehaviour {
 				affectedObject.localPosition = Vector3.LerpUnclamped(storedLocalPos, storedLocalPos + offset, curEase);
             }
         }
-    }
+	}
+	IEnumerator DisappearCube()
+    {
+		yield return new WaitForSeconds(3f);
+		for (var x = 0; x < gridRenderers.Length; x++)
+			gridRenderers[x].material.color = Color.black;
+		for (var x = 0; x < cubeDotRenderer.dotRenderers.Length; x++)
+			cubeDotRenderer.dotRenderers[x].material.color = Color.black;
+		for (var x = 0; x < cubeDotRenderer.xLineRenderers.Length; x++)
+			cubeDotRenderer.xLineRenderers[x].material.color = Color.black;
+		for (var x = 0; x < cubeDotRenderer.yLineRenderers.Length; x++)
+			cubeDotRenderer.yLineRenderers[x].material.color = Color.black;
+		for (var x = 0; x < cubeDotRenderer.zLineRenderers.Length; x++)
+			cubeDotRenderer.zLineRenderers[x].material.color = Color.black;
+		StopCoroutine(floatingCubeHandler);
+		mAudio.PlaySoundAtTransform("SolveX_Rotor", transform);
+		var storedLocalPos = cubeDotRenderer.transform.localPosition;
+		var storedLocalPosGrids = gridRenderers.Select(a => a.transform.localPosition).ToArray();
+		for (var x = 0; x < 10; x++)
+		{
+			var nextOffset = Random.insideUnitSphere * 0.05f * (x + 1) / 10f;
+			cubeDotRenderer.transform.localPosition = storedLocalPos + nextOffset;
+			for (var p = 0; p < storedLocalPosGrids.Length; p++)
+				gridRenderers[p].transform.localPosition = storedLocalPosGrids[p] + nextOffset;
+			yield return new WaitForSeconds(0.05f);
+		}
+		cubeDotRenderer.gameObject.SetActive(false);
+		for (var x = 0; x < gridRenderers.Length; x++)
+			gridRenderers[x].enabled = false;
+	}
+
 
 	IEnumerator SpinObject(Vector3 rotationSpeed, Transform affectedObject)
     {
@@ -181,6 +211,7 @@ public class LatinSudokuScript : MonoBehaviour {
 				moduleSolved = true;
 				idxViewMode = 0;
 				modSelf.HandlePass();
+				StartCoroutine(DisappearCube());
 			}
         }
 		UpdateBoard();

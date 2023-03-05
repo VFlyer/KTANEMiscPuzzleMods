@@ -23,7 +23,16 @@ MonoBehaviour:
     Actual 4x4x4 Sudoku (Inspired by Aaron F. Bianchi''s Actual 3D Sudoku, original
     visuals by SpeakingEvil)
 
-    Puzzle Pandemonium (Module idea by Deaf)'
+    Puzzle Pandemonium (Module idea by Deaf)
+
+
+    Module IDs for each
+
+    Actual 4x4x4 Sudoku: actual4x4x4SudokuModule
+
+    Puzzle Pandemonium: PuzzlePandemoniumModule
+
+'
   version: 1.0
   outputFolder: build
-  previewImage: {fileID: 0}
+  previewImage: {fileID: 2800000, guid: ba4c93c36e11774479f54dc554b4510d, type: 3}
