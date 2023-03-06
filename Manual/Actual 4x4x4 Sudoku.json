@@ -1,0 +1,23 @@
+{
+  "Compatibility": "Compatible",
+  "Contributors": {
+    "Developer": [ "VFlyer" ],
+    "Manual": [ "VFlyer" ],
+    "Modeling": [
+      "Speakingevil",
+      "VFlyer"
+    ]
+  },
+  "DefuserDifficulty": "Medium",
+  "Description": "Solve a 4x4x4 Sudoku board.",
+  "ExpertDifficulty": "VeryEasy",
+  "ModuleID": "actual4x4x4SudokuModule",
+  "Name": "Actual 4x4x4 Sudoku",
+  "Origin": "Mods",
+  "Published": "2023-03-05",
+  "SortKey": "ACTUAL4X4X4SUDOKU",
+  "SourceUrl": "https://github.com/VFlyer/KTANEMiscPuzzleMods",
+  "Souvenir": { "Status": "NotACandidate" },
+  "SteamID": "2942502035",
+  "Type": "Regular"
+}
