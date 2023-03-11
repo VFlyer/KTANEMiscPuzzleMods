@@ -10,9 +10,10 @@ public class PuzzleLightsOut : PuzzleGeneric {
     {
         lightStates = new bool[16];
     }
-    public override void CheckCurrentBoard()
+    public override bool CheckCurrentBoard()
     {
         puzzleSolved = !lightStates.Any(a => a);
+        return base.CheckCurrentBoard();
     }
     public override void DisplayCurrentBoard()
     {

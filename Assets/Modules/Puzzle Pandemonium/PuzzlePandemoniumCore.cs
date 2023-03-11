@@ -90,7 +90,7 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 
 	void LogPuzzleBoard(PuzzleType puzzleToLog, bool logSolutionBoard = true)
     {
-		var puzzle = GetCurrentPuzzle(puzzleToLog);
+		var puzzle = GetPuzzle(puzzleToLog);
 		if (puzzle == null) return;
 		if (logSolutionBoard)
 		{
@@ -110,6 +110,48 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 			QuickLog(currentBoard.Skip(4 * x).Take(4).Join());
 	}
 
+	IEnumerator RevealSpecificPuzzleAnim(PuzzleType aPuzzle)
+    {
+		var nextTransformL = doorHingeL.localRotation * Quaternion.Euler(0, 90, 0);
+		var lastTransformL = doorHingeL.localRotation;
+		var nextTransformR = doorHingeR.localRotation * Quaternion.Euler(0, 90, 0);
+		var lastTransformR = doorHingeR.localRotation;
+
+		var specifiedPuzzle = GetPuzzle(aPuzzle);
+		foreach (var puzzle in allPuzzles)
+			puzzle.HideCurrentBoard();
+
+		specifiedPuzzle.DisplayCurrentBoard();
+
+
+		for (float t = 0; t < 1f; t += Time.deltaTime * animSpeed)
+        {
+			doorHingeL.localRotation = Quaternion.LerpUnclamped(lastTransformL, nextTransformL, t);
+			doorHingeR.localRotation = Quaternion.LerpUnclamped(lastTransformR, nextTransformR, t);
+			yield return null;
+        }
+		doorHingeL.localRotation = nextTransformL;
+		doorHingeR.localRotation = nextTransformR;
+
+		for (float t = 0; t < 1f; t += Time.deltaTime * animSpeed)
+		{
+			doorFrameL.localScale = new Vector3(60 * (1f - t), 2, 0.5f);
+			doorFrameR.localScale = new Vector3(60 * (1f - t), 2, 0.5f);
+			doorFrameL.localPosition = Vector3.right * 30 * (1f - t);
+			doorFrameR.localPosition = Vector3.right * 30 * (1f - t);
+
+			puzzlePlatform.transform.localPosition = Vector3.up * 0.015f * t;
+
+			yield return null;
+		}
+		doorFrameL.localPosition = Vector3.zero;
+		doorFrameR.localPosition = Vector3.zero;
+		doorFrameL.gameObject.SetActive(false);
+		doorFrameR.gameObject.SetActive(false);
+
+		puzzlePlatform.transform.localPosition = Vector3.up * 0.015f;
+		yield break;
+	}
 	IEnumerator RevealPuzzleAnim()
     {
 		var nextTransformL = doorHingeL.localRotation * Quaternion.Euler(0, 90, 0);
@@ -193,6 +235,42 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 		//interactable = true;
 		yield break;
 	}
+	IEnumerator HiddenBoardSolveAnim(PuzzleType hiddenPuzzleSolved = PuzzleType.None)
+    {
+		mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
+		yield return HidePuzzleAnim();
+		yield return RevealSpecificPuzzleAnim(hiddenPuzzleSolved);
+		yield return HandlePuzzleSolveAnim(hiddenPuzzleSolved, false);
+		mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
+		yield return HidePuzzleAnim();
+		yield return RevealPuzzleAnim();
+		var curPuzzleScript = GetCurrentPuzzle();
+		if (curPuzzleScript.CheckCurrentBoard())
+        {
+			interactable = false;
+			QuickLog("{0} has also been solved!", currentPuzzle.ToString().Replace("_", " "));
+			if (curPuzzleScript.GetCurrentBoard().SequenceEqual(curPuzzleScript.GetSolutionBoard()))
+				QuickLogDebug("Solved board for {0} matches expected board.", currentPuzzle.ToString().Replace("_", " "));
+			else
+				QuickLogDebug("{0}'s solved board: {1}", currentPuzzle.ToString().Replace("_", " "), curPuzzleScript.GetCurrentBoard().Join());
+			StartCoroutine(HandlePuzzleSolveAnim(currentPuzzle));
+			alterationInteractionChain.Remove(currentPuzzle);
+		}
+		else if (alterationInteractionChain.Count > 1)
+		{
+			QuickLog("The new interaction chain is as follows:");
+			for (var x = 0; x < alterationInteractionChain.Count; x++)
+				QuickLog("Interacting the tiles in {0} will also affect the tiles in {1}.", alterationInteractionChain[x].ToString().Replace('_', ' '), alterationInteractionChain[(x + 1) % alterationInteractionChain.Count].ToString().Replace('_', ' '));
+			if (movesBeforeSwitching <= 0)
+			{
+				interactable = false;
+				StartCoroutine(SwitchPuzzleAnim());
+			}
+		}
+		else if (alterationInteractionChain.Any())
+			QuickLog("When {0} is solved, the module will disarm.", currentPuzzle.ToString().Replace("_", " "));
+		moduleSolved = !alterationInteractionChain.Any();
+	}
 	IEnumerator SwitchPuzzleAnim()
     {
 		mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.WireSequenceMechanism, transform);
@@ -215,7 +293,7 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 			modSelf.HandlePass();
 		}
     }
-	IEnumerator HandlePuzzleSolveAnim(PuzzleType currentPuzzle)
+	IEnumerator HandlePuzzleSolveAnim(PuzzleType currentPuzzle, bool switchToDifferentPuzzle = true)
     {
 		var flipHoriz = Random.value < 0.5f;
 		var flipVert = Random.value < 0.5f;
@@ -269,12 +347,26 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 						kakurasuSquares.ElementAt(x).material.color = p % 2 == 0 ? Color.green : Color.black;
 				}
 				break;
+			case PuzzleType.Plumbing:
+				var pipes = allPuzzles[(int)PuzzleType.Plumbing].usedRenderers;
+				var idxRelevantOffsetPipes = Enumerable.Range(0, 80).Where(a => (a + 1) % 5 != 0);
+				var lastColorPipes = pipes.Select(a => a.material.color).ToArray();
+				for (float t = 0; t < 1f; t += Time.deltaTime * 5)
+				{
+					yield return null;
+					for (var x = 0; x < idxRelevantOffsetPipes.Count(); x++)
+						pipes.ElementAt(idxRelevantOffsetPipes.ElementAt(x)).material.color = Color.yellow * t + lastColorPipes[x] * (1f - t);
+				}
+				for (var x = 0; x < idxRelevantOffsetPipes.Count(); x++)
+					pipes.ElementAt(idxRelevantOffsetPipes.ElementAt(x)).material.color = Color.yellow;
+				break;
         }
-		StartCoroutine(SwitchPuzzleAnim());
+		if (switchToDifferentPuzzle)
+			StartCoroutine(SwitchPuzzleAnim());
 		yield break;
     }
 
-	PuzzleGeneric GetCurrentPuzzle(PuzzleType puzzle)
+	PuzzleGeneric GetPuzzle(PuzzleType puzzle)
     {
 		PuzzleGeneric outputPuzzle = null;
 		//Debug.Log("Puzzle" + puzzle.ToString().Replace("_", ""));
@@ -288,7 +380,7 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
     }
 	PuzzleGeneric GetCurrentPuzzle()
     {
-		return GetCurrentPuzzle(currentPuzzle);
+		return GetPuzzle(currentPuzzle);
     }
 
 
@@ -302,18 +394,28 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 		curPuzzleScript.HandleIdxPress(idx);
 		if (!curPuzzleScript.GetCurrentBoard().SequenceEqual(lastBoardState))
         {
-			if (alterationInteractionChain.Count > 1)
-			{
-				var nextAffectedPuzzleType = alterationInteractionChain[(alterationInteractionChain.IndexOf(currentPuzzle) + 1) % alterationInteractionChain.Count];
-				var nextAffectedPuzzleScript = GetCurrentPuzzle(nextAffectedPuzzleType);
-				nextAffectedPuzzleScript.HandleIdxPress(idx);
-			}
 			curPuzzleScript.DisplayCurrentBoard();
 			if (movesBeforeSwitching > 0)
 				movesBeforeSwitching--;
-			curPuzzleScript.CheckCurrentBoard();
-			var curPuzzleSolved = curPuzzleScript.IsPuzzleSolved();
-			if (curPuzzleSolved)
+			if (alterationInteractionChain.Count > 1)
+			{
+				var nextAffectedPuzzleType = alterationInteractionChain[(alterationInteractionChain.IndexOf(currentPuzzle) + 1) % alterationInteractionChain.Count];
+				var nextAffectedPuzzleScript = GetPuzzle(nextAffectedPuzzleType);
+				nextAffectedPuzzleScript.HandleIdxPress(idx);
+				if (nextAffectedPuzzleScript.CheckCurrentBoard())
+                {
+					interactable = false;
+					QuickLog("{0} has been solved indirectly!", nextAffectedPuzzleType.ToString().Replace("_", " "));
+					if (nextAffectedPuzzleScript.GetCurrentBoard().SequenceEqual(nextAffectedPuzzleScript.GetSolutionBoard()))
+						QuickLogDebug("Solved board for {0} matches expected board.", nextAffectedPuzzleType.ToString().Replace("_", " "));
+					else
+						QuickLogDebug("{0}'s solved board: {1}", nextAffectedPuzzleType.ToString().Replace("_", " "), nextAffectedPuzzleScript.GetCurrentBoard().Join());
+					alterationInteractionChain.Remove(nextAffectedPuzzleType);
+					StartCoroutine(HiddenBoardSolveAnim(nextAffectedPuzzleType));
+					return;
+				}
+			}
+			if (curPuzzleScript.CheckCurrentBoard())
             {
 				QuickLog("{0} has been solved!", currentPuzzle.ToString().Replace("_", " "));
 				if (curPuzzleScript.GetCurrentBoard().SequenceEqual(curPuzzleScript.GetSolutionBoard()))
@@ -340,22 +442,6 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
             }
 		}
     }
-	/* Doesn't work properly sadly. Alternaitve scripts exist for these kind.
-	void StoreEnum(IEnumerator enumerationThings)
-    {
-		if (storedEnums == null)
-			storedEnums = new List<IEnumerator>();
-		storedEnums.Add(enumerationThings);
-	}
-	void Update()
-    {
-		if (storedEnums != null && storedEnums.Any())
-        {
-			if (!storedEnums.First().MoveNext())
-				storedEnums.RemoveAt(0);
-        }
-    }
-	*/
 #pragma warning disable 414
 	private readonly string TwitchHelpMessage = "Press the following button in the position A4 with \"!{0} A4\". Columns are labeled A-D from left to right, rows are labeled 1-4 from top to bottom. \"press\" is optional. Button presses may be combined in one command, and may be interrupted by puzzles being switched. (\"!{0} A1 B2 C3 D4\")";
 #pragma warning restore 414
@@ -389,6 +475,7 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 				yield return string.Format("sendtochat {1}, Press #{0} has been interrupted due to the module switching puzzles.", x + 1, "{0}");
 				yield break;
             }
+			yield return null;
 			gridSelectables[allIdxesToPress[x]].OnInteract();
 			if (moduleSolved)
 				yield return "solve";
@@ -398,5 +485,44 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 		yield break;
     }
 
+	IEnumerator TwitchHandleForcedSolve()
+    {
+		while (!moduleSolved)
+        {
+			if (!interactable)
+				yield return true;
+			yield return null;
+			movesBeforeSwitching += 80;
+			var currentPuzzleBoard = GetCurrentPuzzle();
+			var solBoard = currentPuzzleBoard.GetSolutionBoard();
+			var curBoard = currentPuzzleBoard.GetCurrentBoard();
+			if (currentPuzzle == PuzzleType.Lights_Out)
+            {
+				for (var x = 0; x < 12; x++)
+				{
+					if (curBoard.ElementAt(x) == 1)
+					{
+						gridSelectables[x + 4].OnInteract();
+						yield return new WaitForSeconds(0.1f);
+						curBoard = currentPuzzleBoard.GetCurrentBoard();
+					}
+				}
+			}
+			else
+            {
+				for (var x = 0; x < 16; x++)
+                {
+					while (curBoard.ElementAt(x) != solBoard.ElementAt(x))
+					{
+						gridSelectables[x].OnInteract();
+						yield return new WaitForSeconds(0.1f);
+						curBoard = currentPuzzleBoard.GetCurrentBoard();
+					}
+				}
+            }
+		}
+		while (!interactable)
+			yield return true;
+    }
 
 }

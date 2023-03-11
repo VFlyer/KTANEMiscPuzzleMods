@@ -29,9 +29,10 @@ public class PuzzleGeneric : MonoBehaviour {
     {
 
     }
-    public virtual void CheckCurrentBoard()
+    public virtual bool CheckCurrentBoard()
     {
-        puzzleSolved = true;
+        //puzzleSolved = true;
+        return puzzleSolved;
     }
 
 	public virtual void HandleIdxPress(int idx)

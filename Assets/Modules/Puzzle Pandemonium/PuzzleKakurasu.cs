@@ -46,13 +46,14 @@ public class PuzzleKakurasu : PuzzleGeneric {
             currentBoard[x] = Random.value < 0.5f;
     }
 
-    public override void CheckCurrentBoard()
+    public override bool CheckCurrentBoard()
     {
         puzzleSolved = true;
         for (var x = 0; x < 4; x++)
         {
             puzzleSolved &= sumsCols[x] == Enumerable.Range(0, 4).Sum(a => currentBoard[x + 4 * a] ? a + 1 : 0) && sumsRows[x] == Enumerable.Range(0, 4).Sum(a => currentBoard[a + 4 * x] ? a + 1 : 0);
         }
+        return base.CheckCurrentBoard();
     }
 
     public override IEnumerable<int> GetCurrentBoard()

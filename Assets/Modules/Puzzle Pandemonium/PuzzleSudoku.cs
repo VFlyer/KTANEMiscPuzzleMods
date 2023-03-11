@@ -184,10 +184,11 @@ public class PuzzleSudoku : PuzzleGeneric {
 		currentBoard[idx] = (currentBoard[idx] + 1) % 5;
 	}
 
-    public override void CheckCurrentBoard()
+    public override bool CheckCurrentBoard()
     {
 		puzzleSolved = currentBoard.SequenceEqual(finalBoard);
-    }
+		return base.CheckCurrentBoard();
+	}
 
     public override IEnumerable<int> GetCurrentBoard()
     {

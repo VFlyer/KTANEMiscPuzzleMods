@@ -33,8 +33,7 @@ public class PuzzleTesterScript : MonoBehaviour {
 				gridSelectables[x].OnInteract += delegate {
 					testingPuzzle.HandleIdxPress(y);
 					testingPuzzle.DisplayCurrentBoard();
-					testingPuzzle.CheckCurrentBoard();
-					if (testingPuzzle.IsPuzzleSolved())
+					if (testingPuzzle.CheckCurrentBoard())
 						modSelf.HandlePass();
 					return false;
 				};

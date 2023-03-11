@@ -159,7 +159,7 @@ public class PuzzlePlumbing : PuzzleGeneric {
             accessibleDirections[x] = accessibleDirections[x].Skip(randomAmount).Concat(accessibleDirections[x].Take(randomAmount)).ToArray();
         }
     }
-    public override void CheckCurrentBoard()
+    public override bool CheckCurrentBoard()
     {
         var filledTiles = new List<int>();
         var scanningTiles = new List<int> { startingIdx };
@@ -191,7 +191,7 @@ public class PuzzlePlumbing : PuzzleGeneric {
         }
 
         puzzleSolved = filledTiles.Count >= 16;
-
+        return base.CheckCurrentBoard();
     }
 
     public override void HandleIdxPress(int idx)
