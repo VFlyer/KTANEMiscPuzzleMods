@@ -141,15 +141,21 @@ public class LatinSudokuScript : MonoBehaviour {
 		StopAllCoroutines();
 		if (!moduleSolved)
         {
-			QuickLog("Unsolved grid upon detonation/abandoning:");
-			LogGrid(currentGrid);
-        }
+			if (Enumerable.Range(0, 64).Where(a => !lockPlacements[a]).Any(a => a != 0))
+			{
+				QuickLog("Unsolved grid upon detonation/abandoning:");
+				LogGrid(currentGrid);
+			}
+			else
+				QuickLog("Unsolved grid upon detonation/abandoning is exactly the same as initial board.");
+		}
     }
 	
 	void HandleResetBoard()
     {
-		if (moduleSolved || !interactable) return;
-
+		var idxToPlace = curZIdx + 4 * curYIdx + 16 * curXIdx;
+		if (moduleSolved || !interactable || lockPlacements[idxToPlace]) return;
+		
 		if (Enumerable.Range(0, 64).Where(a => !lockPlacements[a]).Any(a => a != 0))
 		{
 			QuickLog("Non-initial grid before reset:");
@@ -545,9 +551,10 @@ public class LatinSudokuScript : MonoBehaviour {
 		if (holdingSolid && timeHeld < 3f)
 			timeHeld += Time.deltaTime;
 		var curEase = Easing.InSine(timeHeld, 0f, 2f, 1f);
+		var idxToPlace = curZIdx + 4 * curYIdx + 16 * curXIdx;
 		for (var x = 0; x < miscRingRenderers.Length; x++)
         {
-			miscRingRenderers[x].material.color = holdingSolid ? Color.yellow * curEase + Color.black * (1f - curEase) : Color.black;
+			miscRingRenderers[x].material.color = holdingSolid && !lockPlacements[idxToPlace] ? Color.yellow * curEase + Color.black * (1f - curEase) : Color.black;
         }
 	}
 	//twitch plays
@@ -620,6 +627,11 @@ public class LatinSudokuScript : MonoBehaviour {
         {
 			var idxCurPos = curZIdx + 4 * curYIdx + 16 * curXIdx;
 			var selectedInputIdx = Enumerable.Range(0, 4).Where(a => a != finalGrid[idxCurPos]).PickRandom();
+			if (lockPlacements[idxCurPos])
+            {
+				yield return "sendtochaterror You cannot reset here! Move away from the locked tile to reset.";
+				yield break;
+            }
 			yield return null;
 			inputSelectables[selectedInputIdx].OnInteract();
 			yield return new WaitUntil(delegate { return timeHeld > 1.75f; });

@@ -124,7 +124,7 @@ public class SplooshKaboomHandler : MonoBehaviour {
         {
 			var row = x / 8;
 			var col = x % 8;
-			boardRenderers[x].material.color = ((trackedShots != null && trackedShots.Contains(x)) || revealAll ? board[row][col] > 0 ? Color.white : Color.black : Color.blue) * 0.5f;
+			boardRenderers[x].material.color = ((trackedShots != null && trackedShots.Contains(x)) || revealAll ? board[row][col] > 0 ? Color.white : Color.black :new Color(0.5f,1,1)) * 0.85f;
         }
 
     }

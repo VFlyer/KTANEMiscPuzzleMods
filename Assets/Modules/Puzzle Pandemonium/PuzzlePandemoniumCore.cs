@@ -152,7 +152,7 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 		puzzlePlatform.transform.localPosition = Vector3.up * 0.015f;
 		yield break;
 	}
-	IEnumerator RevealPuzzleAnim()
+	IEnumerator RevealPuzzleAnim(bool reenableInteractions = true)
     {
 		var nextTransformL = doorHingeL.localRotation * Quaternion.Euler(0, 90, 0);
 		var lastTransformL = doorHingeL.localRotation;
@@ -192,7 +192,7 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 		doorFrameR.gameObject.SetActive(false);
 
 		puzzlePlatform.transform.localPosition = Vector3.up * 0.015f;
-		interactable = true;
+		interactable |= reenableInteractions;
 		yield break;
 	}
 	IEnumerator HidePuzzleAnim()
@@ -445,7 +445,7 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 #pragma warning disable 414
 	private readonly string TwitchHelpMessage = "Press the following button in the position A4 with \"!{0} A4\". Columns are labeled A-D from left to right, rows are labeled 1-4 from top to bottom. \"press\" is optional. Button presses may be combined in one command, and may be interrupted by puzzles being switched. (\"!{0} A1 B2 C3 D4\")";
 #pragma warning restore 414
-	readonly string RowIDXScan = "abcd", ColIDXScan = "1234";
+	readonly string RowIDXScan = "1234", ColIDXScan = "abcd";
 	IEnumerator ProcessTwitchCommand(string cmd)
     {
 		if (moduleSolved)
@@ -459,13 +459,13 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 			intCmd = intCmd.Replace("press", "").Trim();
 		foreach (string portion in intCmd.Split())
 		{
-			if (!portion.RegexMatch(string.Format(@"^[{0}][{1}]$", RowIDXScan, ColIDXScan)))
+			if (!portion.RegexMatch(string.Format(@"^[{1}][{0}]$", RowIDXScan, ColIDXScan)))
             {
 				yield return string.Format("sendtochaterror The command portion \"{0}\" does not correspond to a valid coordinate!", portion);
 				yield break;
             }
-			var rowIdx = RowIDXScan.IndexOf(portion[0]);
-			var colIdx = ColIDXScan.IndexOf(portion[1]);
+			var rowIdx = RowIDXScan.IndexOf(portion[1]);
+			var colIdx = ColIDXScan.IndexOf(portion[0]);
 			allIdxesToPress.Add(4 * rowIdx + colIdx);
 		}
 		for (var x = 0; x < allIdxesToPress.Count; x++)
