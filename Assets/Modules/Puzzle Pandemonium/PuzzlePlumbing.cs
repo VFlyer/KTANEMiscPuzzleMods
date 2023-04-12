@@ -209,5 +209,12 @@ public class PuzzlePlumbing : PuzzleGeneric {
     {
         return solvedDirections.Select(a => Enumerable.Range(0, 4).Reverse().Sum(b => (a[b] ? 1 : 0) << b));
     }
-
+    public override void MimicLogBoard(string formatString, bool logSolutionBoard = false)
+    {
+        var loggingRefPipes = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+        for (var x = 0; x < 4; x++)
+        {
+            Debug.LogFormat(formatString, "");
+        }
+    }
 }

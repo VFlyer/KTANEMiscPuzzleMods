@@ -40,6 +40,11 @@ public class PuzzleGeneric : MonoBehaviour {
 
     }
 
+    public virtual void MimicLogBoard(string formatString, bool logSolutionBoard = false)
+    {
+        //Debug.LogFormat(formatString, logSolutionBoard ? GetSolutionBoard() : GetCurrentBoard());
+    }
+
     public virtual IEnumerable<int> GetCurrentBoard()
     {
         return new int[0];

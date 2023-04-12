@@ -198,5 +198,9 @@ public class PuzzleSudoku : PuzzleGeneric {
     {
 		return finalBoard;
     }
-
+	public override void MimicLogBoard(string formatString, bool logSolutionBoard = false)
+	{
+		for (var x = 0; x < 4; x++)
+			Debug.LogFormat(formatString, (logSolutionBoard ? finalBoard : currentBoard).Skip(4 * x).Take(4).Select(a => a == 0 ? "" : a.ToString()).Join());
+	}
 }

@@ -65,6 +65,17 @@ public class PuzzleKakurasu : PuzzleGeneric {
         return solutionBoard.Select(a => a ? 1 : 0);
     }
 
+    public override void MimicLogBoard(string formatString, bool logSolutionBoard = false)
+    {
+        for (var x = 0; x < 4; x++)
+            Debug.LogFormat(formatString, (logSolutionBoard ? solutionBoard : currentBoard).Skip(4 * x).Take(4).Select(a => a ? 1 : 0).Join());
+        if (logSolutionBoard)
+        {
+            Debug.LogFormat(formatString, string.Format("Columns' sum: {0}", sumsCols.Join()));
+            Debug.LogFormat(formatString, string.Format("Rows' sum: {0}", sumsRows.Join()));
+        }
+    }
+
     public override void DisplayCurrentBoard()
     {
         base.DisplayCurrentBoard();

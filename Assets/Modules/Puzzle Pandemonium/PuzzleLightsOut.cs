@@ -80,5 +80,9 @@ public class PuzzleLightsOut : PuzzleGeneric {
     {
         return Enumerable.Repeat(0, 16);
     }
-
+    public override void MimicLogBoard(string formatString, bool logSolutionBoard = false)
+    {
+        for (var x = 0; x < 4; x++)
+            Debug.LogFormat(formatString, (logSolutionBoard ? Enumerable.Repeat(false, 16) : lightStates).Skip(4 * x).Take(4).Select(a => a ? 1 : 0).Join());
+    }
 }
