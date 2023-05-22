@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1">
+    <title>Sploosh Kaboom RNG Table — Keep Talking and Nobody Explodes Module</title>
+    <link rel="stylesheet" type="text/css" href="css/font.css">
+    <link rel="stylesheet" type="text/css" href="css/normalize.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="js/ktane-utils.js"></script>
+    <script src="js/jquery.3.1.1.min.js"></script>
+    <script src="js/jquery-ui.1.12.1.min.js"></script>
+    <script>
+        $(function() {
+            let s1 = 100;
+            let s2 = 100;
+            let s3 = 100;
+            let allS1s = Array();
+            let allS2s = Array();
+            let allS3s = Array();
+            let allValuesTo1 = Array();
+            function next()
+            {
+                s1 = 171 * s1 % 30269;
+                s2 = 172 * s2 % 30307;
+                s3 = 170 * s3 % 30323;
+                return (s1 / 30269 + s2 / 30307 + s3 / 30323) % 1.0;
+            }
+
+            for (let p = 0; p < 400; p++)
+            {
+                let nextVal = next();
+                allValuesTo1.push(nextVal);
+                allS1s.push(s1);
+                allS2s.push(s2);
+                allS3s.push(s3);
+            }
+            let body = $("div.section");
+            let curPageNum = 2;
+            let extraPagesToCreate = 15;
+            for (let x = 0; x < extraPagesToCreate; x++) {
+                let page = $("<div>").addClass(`page page-bg-0${curPageNum % 7 + 1}`).appendTo(body);
+                $('<div class="page-header"><span class="page-header-doc-title">Keep Talking and Nobody Explodes Mod</span><span class="page-header-section-title">Cosmic</span></div>').appendTo(page);
+                let content = $("<div>").addClass(`page-content page-0${curPageNum - 1}`).appendTo(page);
+                // Page content begins here.
+                let divider = $("<div>").addClass('fit').appendTo(content);
+                if (x >= extraPagesToCreate - 1) // Since the last set of values will exceed the amount needed, we need to remove the class 'fit' from the div to not obtain weird tables.
+                    divider.removeClass('fit');
+                // Add a table corresponding to this.
+                    let table = $("<table>").addClass('lookup centered').appendTo(divider);
+                    let curRow = $("<tr>").appendTo(table);
+                    $("<th>Iter.</th><th>S1</th><th>S2</th><th>S3</th><th>Val</th><th>&times; 5</th><th>&times; 6</th><th>&times; 7</th><th>&times; 8</th>").appendTo(curRow);
+                $("<div>").addClass("page-footer relative-footer").text(curPageNum).appendTo(page);
+                curPageNum++;
+            }
+            let allLookups = $(".lookup");
+            let curIdx = 0;
+            for (let x = 0; x < allLookups.length; x++)
+            {
+                for (let p = 0; p < 25; p++)
+                {
+                    if (curIdx >= allS1s.length) break;
+                    let curRow = $("<tr>");
+                    $("<th>").html(curIdx + 1).appendTo(curRow);
+                    $("<td>").html(allS1s[curIdx]).appendTo(curRow);
+                    $("<td>").html(allS2s[curIdx]).appendTo(curRow);
+                    $("<td>").html(allS3s[curIdx]).appendTo(curRow);
+                    let curValue = allValuesTo1[curIdx];
+                    $("<td>").html(curValue).appendTo(curRow);
+                    $("<td>").html(Math.floor(curValue * 5).toString()).appendTo(curRow);
+                    $("<td>").html(Math.floor(curValue * 6).toString()).appendTo(curRow);
+                    $("<td>").html(Math.floor(curValue * 7).toString()).appendTo(curRow);
+                    $("<td>").html(Math.floor(curValue * 8).toString()).appendTo(curRow);
+                    curRow.appendTo(allLookups[x]);
+                    curIdx++;
+                }
+            }
+        });
+    </script>
+    <style>
+        .page-footer::before { content: "Page "; }
+        .page-footer::after { content: " of 16"; }
+        .centered { text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="section">
+        <div class="page page-bg-01">
+            <div class="page-header">
+                <span class="page-header-doc-title">Keep Talking and Nobody Explodes Mod</span>
+                <span class="page-header-section-title">Sploosh Kaboom</span>
+            </div>
+            <div class="page-content">
+				<img src="img/Component/Sploosh%20Kaboom.svg" class="diagram">
+                <h2>On the Look Up of Sploosh Kaboom</h2>
+                <p>You will need the <a href="Sploosh Kaboom.html">original manual</a> here.</p>
+                <table class="centered lookup">
+					<tr><th>Iter.</th><th>S1</th><th>S2</th><th>S3</th><th>Val.</th><th>&times; 5</th><th>&times; 6</th><th>&times; 7</th><th>&times; 8</th></tr>
+				</table>
+            </div>
+            <div class="page-footer relative-footer">1</div>
+        </div>
+    </div>
+</body>
+</html>

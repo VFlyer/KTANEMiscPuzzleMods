@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="initial-scale=1">
+    <title>Sploosh Kaboom — Keep Talking and Nobody Explodes Module</title>
+    <link rel="stylesheet" type="text/css" href="css/font.css">
+    <link rel="stylesheet" type="text/css" href="css/normalize.css">
+    <link rel="stylesheet" type="text/css" href="css/main.css">
+    <script src="js/ktane-utils.js"></script>
+</head>
+<body>
+    <div class="section">
+        <div class="page page-bg-01">
+            <div class="page-header">
+                <span class="page-header-doc-title">Keep Talking and Nobody Explodes Mod</span>
+                <span class="page-header-section-title">Sploosh Kaboom</span>
+            </div>
+            <div class="page-content">
+				<img src="img/Component/Sploosh%20Kaboom.svg" class="diagram">
+                <h2>On the Subject of Sploosh Kaboom</h2>
+				<p class="flavour-text">You are 30 minutes on a world record pace. All that stands between you and this record is this RNG nightmare.</p>
+				<p>This module consists of an 8x8 board and a display on the left denoting how many shots you have used so far.</p>
+				<p>To disarm this module, win a game of Sploosh Kaboom at least twice, and have at least one win use 19 shots or fewer.</p>
+				<p>The rules of Sploosh Kaboom are the following:</p>
+				<ul>
+					<li>You are given 24 shots to find 3 squids.</li>
+					<li>The three squids each are 2, 3, and 4 tiles long. There will never be a duplicate squid of that length.</li>
+					<li>Squids may touch each other orthogonally, or diagonally. The squids will NEVER overlap.</li>
+				</ul>
+				<p>Failing to find the 3 squids will reveal their positions. Tapping the display will reset the module with a new board, unless all shots have not been used yet, the module will consume rest of the shots by shooting randomly.</p>
+				<p>Holding the display for at least 2 seconds and then releasing will HARD reset the module, by resetting the RNG, and the progress made.</p>
+                <h3>The Snippet of Relevant Code</h3>
+                <p><code>var horizPlacement = randomizer.Next() < 0.5f;<br>
+                    var coordinateRow = randomizer.Next(0, 8 - (!horizPlacement ? curLength : 0));<br>
+                    var coordinateCol = randomizer.Next(0, 8 - (horizPlacement ? curLength : 0));</code></p>
+            </div>
+            <div class="page-footer relative-footer">Page 1 of 2</div>
+        </div>
+        <div class="page page-bg-01">
+            <div class="page-header">
+                <span class="page-header-doc-title">Keep Talking and Nobody Explodes Mod</span>
+                <span class="page-header-section-title">Sploosh Kaboom</span>
+            </div>
+            <div class="page-content">
+				<p>This module uses a pseudo-randomizer known as Wicemann-Hill. This pseudo-randomizer is always initially called at least 100 times and no more than 300 times per module. When generating a board, 3 calls are made for each squid in the snippet of code provided, 1 to determine if the squid should be placed horizontally or vertically, and 2 for the coordinate of the squid placed. If the result of this causes overlapping squids, 3 more of the mentioned calls are made until the squid placed no longer overlaps.</p>
+                <h3>Wicemann-Hill Pseudo-Random</h3>
+				<p><a href="https://youtu.be/1hs451PfFzQ">Reference Video</a></p>
+				<code>#Seed the state<br>s1, s2, s3 = 100, 100, 100<br><br># Wichmann-Hill Generator<br>def rng():<br>s1 = 171 * s1 % 30269<br>s2 = 172 * s2 % 30307<br>s3 = 170 * s3 % 30323<br>return (s1 / 30269 + s2 / 30307 + s3 / 30323) % 1.0
+				</code>
+                <p><a href="Sploosh Kaboom look up table (VFlyer).html">Extended Table</a></p>
+				<table class="centered">
+					<tr><th>Iter.</th><th>S1</th><th>S2</th><th>S3</th></tr>
+					<tr><th>0</th><td>100</td><td>100</td><td>100</td></tr>
+					<tr><th>50</th><td>22917</td><td>16327</td><td>10119</td></tr>
+					<tr><th>100</th><td>21103</td><td>14756</td><td>21160</td></tr>
+					<tr><th>150</th><td>29760</td><td>10110</td><td>24635</td></tr>
+					<tr><th>200</th><td>15628</td><td>11051</td><td>19975</td></tr>
+					<tr><th>250</th><td>8516</td><td>12850</td><td>27533</td></tr>
+					<tr><th>300</th><td>18028</td><td>21990</td><td>11813</td></tr>
+				</table>
+            </div>
+            <div class="page-footer relative-footer">Page 2 of 2</div>
+        </div>
+    </div>
+</body>
+</html>
