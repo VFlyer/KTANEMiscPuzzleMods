@@ -9,9 +9,11 @@ public class IICube : MonoBehaviour {
 	public Material[] possibleMaterials;
 	int[] assignedCubeIdxes;
 
-	public void AssignNewCubeFaceIdxes(IEnumerable<int> newIdxes)
+	public void AssignNewCubeFaceIdxes(IEnumerable<int> newIdxes, bool forceUpdate = false)
     {
 		assignedCubeIdxes = newIdxes.ToArray();
+		if (forceUpdate)
+			UpdateCubeRenderers();
     }
 	public int[] GetCubeFaceIdxes()
     {
