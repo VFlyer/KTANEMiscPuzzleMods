@@ -14,7 +14,7 @@ MonoBehaviour:
   id: VFlyerMiscPuzzlesMod
   title: Flyer's Misc. Puzzles
   author: VFlyer
-  description: 'A collection of 2 puzzle oriented modules developed by VFlyer.
+  description: 'A collection of 3 puzzle oriented modules developed by VFlyer.
 
     [i]If he were to make puzzles in his life, maybe this would be his first idea.[/i]
 
@@ -32,7 +32,9 @@ MonoBehaviour:
 
     Puzzle Pandemonium: PuzzlePandemoniumModule
 
+    Instant Insanity: InstantInsanityModule
+
 '
-  version: 1.1.1
+  version: 1.2
   outputFolder: build
   previewImage: {fileID: 2800000, guid: ba4c93c36e11774479f54dc554b4510d, type: 3}

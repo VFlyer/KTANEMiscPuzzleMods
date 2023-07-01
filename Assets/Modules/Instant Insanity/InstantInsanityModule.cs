@@ -50,7 +50,7 @@ public class InstantInsanityModule : MonoBehaviour {
 			var y = x;
 			cubeSelectables[x].OnInteract += delegate {
 				//mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonRelease, cubeSelectables[y].transform);
-				if (!waiting && cubeSelectables[y].gameObject.activeSelf)
+				if (!(waiting || moduleSolved) && cubeSelectables[y].gameObject.activeSelf)
 				{
 					waiting = true;
 					HandleSelectCurCube(y, false);
@@ -64,7 +64,7 @@ public class InstantInsanityModule : MonoBehaviour {
 			cubeRotateSelectables[x].OnInteract += delegate {
 				mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, cubeRotateSelectables[y].transform);
 				cubeRotateSelectables[y].AddInteractionPunch(0.2f);
-				if (!waiting)
+				if (!(waiting || moduleSolved))
 				{
 					waiting = true;
 					HandleRotateCurCube(y, false);
@@ -75,7 +75,7 @@ public class InstantInsanityModule : MonoBehaviour {
 		submitSelectable.OnInteract += delegate
 		{
 			mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, submitSelectable.transform);
-			if (!waiting)
+			if (!(waiting || moduleSolved))
             {
 				waiting = true;
 				HandleSubmit();
@@ -96,6 +96,11 @@ public class InstantInsanityModule : MonoBehaviour {
 	}
 	void GeneratePuzzle()
 	{
+		var possibleSets = new[] {
+				new[] { 0, 0 }, new[] { 0, 1 }, new[] { 0, 2 }, new[] { 0, 3 },
+				new[] { 1, 1 }, new[] { 1, 2 }, new[] { 1, 3 },
+				new[] { 2, 2 }, new[] { 2, 3 },
+				new[] { 3, 3 }};
 		var allowedCubes = new int[4][];
 		for (var p = 0; p < 4; p++)
 			allowedCubes[p] = new int[6];
@@ -105,17 +110,15 @@ public class InstantInsanityModule : MonoBehaviour {
 			for (var p = 0; p < 4; p++)
 				allowedCubes[p][x] = randomIdxMatching[p];
 		}
+		var oppositePairings = new[] { new[] { 1, 3 }, new[] { 2, 4 } };
 		for (var p = 0; p < 4; p++)
 		{
-			/*
-			var possibleSets = new[] {
-				new[] { 0, 0 }, new[] { 0, 1 }, new[] { 0, 2 }, new[] { 0, 3 },
-				new[] { 1, 1 }, new[] { 1, 2 }, new[] { 1, 3 },
-				new[] { 2, 2 }, new[] { 2, 3 },
-				new[] { 3, 3 }};
-			*/
-			allowedCubes[p][0] = Random.Range(0, 4);
-			allowedCubes[p][5] = Random.Range(0, 4);
+			var curCubePairsOpposites = oppositePairings.Select(a => a.Select(b => allowedCubes[p][b]).ToArray());
+			var filteredSets = possibleSets.Where(a => !curCubePairsOpposites.Any(b => b.SequenceEqual(a.Reverse()) || b.SequenceEqual(a)));
+			var pickedSet = filteredSets.PickRandom();
+			var flipPickedSet = Random.value < 0.5f;
+			allowedCubes[p][0] = flipPickedSet ? pickedSet.Last() : pickedSet.First();
+			allowedCubes[p][5] = flipPickedSet ? pickedSet.First() : pickedSet.Last();
 		}
 		QuickLog("Guaranteed Solution (Logged face order U, F, R, B, L, D):");
 		foreach (var cube in allowedCubes)
@@ -356,18 +359,18 @@ public class InstantInsanityModule : MonoBehaviour {
 			StartCoroutine(HandleSubmitAnim());
     }
 	IEnumerator HandleSubmitAnim()
-    {
+	{
 		if (curCubeIdx != -1)
-        {
+		{
 			yield return HandleCubeResizeAnim(curCubeIdx, true);
 			curCubeIdx = -1;
-        }
-        for (float t = 0; t < 1f; t += Time.deltaTime * speed)
-        {
+		}
+		for (float t = 0; t < 1f; t += Time.deltaTime * speed)
+		{
 			for (var x = 0; x < cubes.Length; x++)
 				cubes[x].transform.localScale = Vector3.Lerp(storedCubesLocalScale[x], Vector3.zero, Mathf.Clamp01(t));
 			yield return null;
-        }
+		}
 		for (var x = 0; x < cubes.Length; x++)
 			cubes[x].gameObject.SetActive(false);
 		for (var x = 0; x < miscCubes.Length; x++)
@@ -384,8 +387,8 @@ public class InstantInsanityModule : MonoBehaviour {
 			miscCubes[x].transform.localPosition = storedMiscCubesLocalPos[x];
 			miscCubes[x].transform.localScale = storedMiscCubesLocalScale[x];
 			mAudio.PlaySoundAtTransform(new[] { "sound2", "sound3", "sound5", "sound6" }[x], transform);
-            for (var p = 1; p < 5; p++)
-				checkerDisplays[p - 1].allRenderers[curCubeFaceIdxes[p]].enabled = true;
+			for (var p = 0; p < 4; p++)
+				checkerDisplays[p].allRenderers[curCubeFaceIdxes[p + 1] + 1].enabled = true;
 		}
 		yield return new WaitForSeconds(.1f);
 		QuickLog("Submitted current state (Logged face order U, F, R, B, L, D):");
@@ -397,40 +400,53 @@ public class InstantInsanityModule : MonoBehaviour {
 			modSelf.HandlePass();
 			mAudio.PlaySoundAtTransform("XYRayThree", transform);
 			moduleSolved = true;
-			yield break;
-		}
-		QuickLog("Submission invalid.");
-		QuickLog("Following faces have duplicate colors: {0}", Enumerable.Range(1, 4).Where(a => cubes.Select(b => b.GetCubeFaceIdxes()).Select(b => b[a]).Distinct().Count() != 4).Select(a => "UFRBLD"[a]).Join(", "));
-		modSelf.HandleStrike();
-		yield return new WaitForSeconds(1f);
-		foreach (var groupedRenderers in checkerDisplays)
-			foreach (MeshRenderer aRender in groupedRenderers.allRenderers)
-				aRender.enabled = false;
-		for (var x = miscCubes.Length - 1; x >= 0; x--)
-		{
-			for (float t = 0; t < 1f; t += Time.deltaTime * speed / 2f)
+			for (var x = 0; x < 5; x++)
 			{
-				miscCubes[x].transform.localPosition = Vector3.Lerp(storedMiscCubesLocalPos[x], storedMiscCubesLocalPos[x] + Vector3.up * 3, Mathf.Clamp01(t));
-				miscCubes[x].transform.localScale = Vector3.Lerp(storedMiscCubesLocalScale[x], Vector3.zero, Mathf.Clamp01(t));
+				for (var p = 0; p < 4; p++)
+					checkerDisplays[p].allRenderers[0].enabled = x % 2 == 0;
+				yield return new WaitForSeconds(0.1f);
+			}
+		}
+		else
+		{
+			QuickLog("Submission invalid.");
+			QuickLog("Following faces have duplicate colors: {0}", Enumerable.Range(1, 4).Where(a => cubes.Select(b => b.GetCubeFaceIdxes()).Select(b => b[a]).Distinct().Count() != 4).Select(a => "UFRBLD"[a]).Join(", "));
+			modSelf.HandleStrike();
+			for (var x = 0; x < 5; x++)
+			{
+				for (var p = 0; p < 4; p++)
+					checkerDisplays[p].allRenderers[0].enabled = x % 2 == 0 && cubes.Select(b => b.GetCubeFaceIdxes()).Select(b => b[p + 1]).Distinct().Count() == 4;
+				yield return new WaitForSeconds(0.1f);
+			}
+			yield return new WaitForSeconds(0.5f);
+			foreach (var groupedRenderers in checkerDisplays)
+				foreach (MeshRenderer aRender in groupedRenderers.allRenderers)
+					aRender.enabled = false;
+			for (var x = miscCubes.Length - 1; x >= 0; x--)
+			{
+				for (float t = 0; t < 1f; t += Time.deltaTime * speed / 2f)
+				{
+					miscCubes[x].transform.localPosition = Vector3.Lerp(storedMiscCubesLocalPos[x], storedMiscCubesLocalPos[x] + Vector3.up * 3, Mathf.Clamp01(t));
+					miscCubes[x].transform.localScale = Vector3.Lerp(storedMiscCubesLocalScale[x], Vector3.zero, Mathf.Clamp01(t));
+					yield return null;
+				}
+				miscCubes[x].transform.localPosition = storedMiscCubesLocalPos[x];
+				miscCubes[x].transform.localScale = storedMiscCubesLocalScale[x];
+				miscCubes[x].gameObject.SetActive(false);
+			}
+
+
+			for (var x = 0; x < cubes.Length; x++)
+				cubes[x].gameObject.SetActive(true);
+			for (float t = 0; t < 1f; t += Time.deltaTime * speed)
+			{
+				for (var x = 0; x < cubes.Length; x++)
+					cubes[x].transform.localScale = Vector3.Lerp(Vector3.zero, storedCubesLocalScale[x], Mathf.Clamp01(t));
 				yield return null;
 			}
-			miscCubes[x].transform.localPosition = storedMiscCubesLocalPos[x];
-			miscCubes[x].transform.localScale = storedMiscCubesLocalScale[x];
-			miscCubes[x].gameObject.SetActive(false);
-		}
-
-
-		for (var x = 0; x < cubes.Length; x++)
-			cubes[x].gameObject.SetActive(true);
-		for (float t = 0; t < 1f; t += Time.deltaTime * speed)
-		{
 			for (var x = 0; x < cubes.Length; x++)
-				cubes[x].transform.localScale = Vector3.Lerp(Vector3.zero, storedCubesLocalScale[x], Mathf.Clamp01(t));
-			yield return null;
+				cubes[x].transform.localScale = storedCubesLocalScale[x];
+			waiting = false;
 		}
-		for (var x = 0; x < cubes.Length; x++)
-			cubes[x].transform.localScale = storedCubesLocalScale[x];
-		waiting = false;
-		yield break;
     }
 }
