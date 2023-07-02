@@ -211,7 +211,7 @@ public class PuzzlePlumbing : PuzzleGeneric {
     }
     public override void MimicLogBoard(string formatString, bool logSolutionBoard = false)
     {
-        var loggingRefPipes = new char[] { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+        var loggingRefPipes = new char[] { '\u253C', '\u2568', '\u255E', '\u255A', '\u2565', '\u2551', '\u2554', '\u2560', '\u2561', '\u255D', '\u2550', '\u2569', '\u2557', '\u2563', '\u2566', '\u256C' };
         for (var x = 0; x < 4; x++)
         {
             Debug.LogFormat(formatString, accessibleDirections.Skip(4 * x).Take(4).Select(a => loggingRefPipes[Enumerable.Range(0, 4).Select(b => (a[b] ? 1 : 0) << b).Sum()]).Join());

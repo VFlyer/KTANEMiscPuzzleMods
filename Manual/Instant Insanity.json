@@ -1,0 +1,16 @@
+{
+  "Compatibility": "Compatible",
+  "Contributors": { "Developer": [ "VFlyer" ] },
+  "DefuserDifficulty": "Easy",
+  "Description": "Rotate the four cubes such that on the front, right, back and left faces, no colors repeat.",
+  "ExpertDifficulty": "Hard",
+  "ModuleID": "InstantInsanityModule",
+  "Name": "Instant Insanity",
+  "Origin": "Mods",
+  "Published": "2023-07-01",
+  "SortKey": "INSTANTINSANITY",
+  "SourceUrl": "https://github.com/VFlyer/KTANEMiscPuzzleMods",
+  "Souvenir": { "Status": "NotACandidate" },
+  "SteamID": "2942502035",
+  "Type": "Regular"
+}
