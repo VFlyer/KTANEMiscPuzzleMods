@@ -1,10 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
-public class InstantInsanityModule : MonoBehaviour {
+public class InstantInsanityModule : MonoBehaviour
+{
 	public KMBombModule modSelf;
 	public KMAudio mAudio;
 	public KMColorblindMode colorblindMode;
@@ -31,16 +33,25 @@ public class InstantInsanityModule : MonoBehaviour {
 	}
 	List<ActionType> queuedActions;
 	List<int> actionArgs;*/
-	bool waiting = false, moduleSolved;
+	bool waiting = false, moduleSolved, colorblindDetected = false;
 	// Use this for initialization
 	Vector3[] storedCubesLocalPos, storedCubesLocalScale, storedMiscCubesLocalPos, storedMiscCubesLocalScale;
 	Vector3 storedBigCubeLocalPos, storedBigCubeLocalScale;
-	
+
 	void QuickLog(string toLog, params object[] args)
 	{
 		Debug.LogFormat("[{0} #{1}] {2}", modSelf.ModuleDisplayName, moduleID, string.Format(toLog, args));
 	}
-	void Start() {
+	void Start()
+	{
+		try
+		{
+			colorblindDetected = colorblindMode.ColorblindModeActive;
+		}
+		catch
+        {
+			colorblindDetected = false;
+        }
 		moduleID = ++modIDCnt;
 		GeneratePuzzle();
 		//queuedActions = new List<ActionType>();
@@ -48,7 +59,8 @@ public class InstantInsanityModule : MonoBehaviour {
 		for (var x = 0; x < cubeSelectables.Length; x++)
 		{
 			var y = x;
-			cubeSelectables[x].OnInteract += delegate {
+			cubeSelectables[x].OnInteract += delegate
+			{
 				//mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonRelease, cubeSelectables[y].transform);
 				if (!(waiting || moduleSolved) && cubeSelectables[y].gameObject.activeSelf)
 				{
@@ -61,7 +73,8 @@ public class InstantInsanityModule : MonoBehaviour {
 		for (var x = 0; x < cubeRotateSelectables.Length; x++)
 		{
 			var y = x;
-			cubeRotateSelectables[x].OnInteract += delegate {
+			cubeRotateSelectables[x].OnInteract += delegate
+			{
 				mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, cubeRotateSelectables[y].transform);
 				cubeRotateSelectables[y].AddInteractionPunch(0.2f);
 				if (!(waiting || moduleSolved))
@@ -76,10 +89,10 @@ public class InstantInsanityModule : MonoBehaviour {
 		{
 			mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, submitSelectable.transform);
 			if (!(waiting || moduleSolved))
-            {
+			{
 				waiting = true;
 				HandleSubmit();
-            }
+			}
 			return false;
 		};
 
@@ -90,8 +103,8 @@ public class InstantInsanityModule : MonoBehaviour {
 		storedMiscCubesLocalPos = miscCubes.Select(a => a.transform.localPosition).ToArray();
 		storedMiscCubesLocalScale = miscCubes.Select(a => a.transform.localScale).ToArray();
 		foreach (var groupedRenderers in checkerDisplays)
-            foreach (MeshRenderer aRender in groupedRenderers.allRenderers)
-                aRender.enabled = false;
+			foreach (MeshRenderer aRender in groupedRenderers.allRenderers)
+				aRender.enabled = false;
 		selectedCube.gameObject.SetActive(false);
 	}
 	void GeneratePuzzle()
@@ -160,8 +173,17 @@ public class InstantInsanityModule : MonoBehaviour {
 		foreach (var cube in allowedCubes)
 			QuickLog(cube.Select(a => "RYGB"[a]).Join(", "));
 		for (var p = 0; p < cubes.Length; p++)
-			cubes[p].AssignNewCubeFaceIdxes(allowedCubes[p], true);
+		{
+			cubes[p].AssignNewCubeFaceIdxes(allowedCubes[p]);
+		}
+		HandleColorblindToggle();
 	}
+	void HandleColorblindToggle()
+    {
+		for (var p = 0; p < cubes.Length; p++)
+			cubes[p].UpdateCubeRenderers(colorblindDetected ? 4 : 0);
+	}
+
 	void HandleSelectCurCube(int nxtCubeIdx, bool fastAction = false)
 	{
 		var oldCubeIdx = curCubeIdx;
@@ -239,7 +261,7 @@ public class InstantInsanityModule : MonoBehaviour {
 	IEnumerator HandleCubeRotateAnim(Quaternion offsetRotation, int curIdx = 0)
 	{
 		//selectedCube.AssignNewCubeFaceIdxes(cubes[curIdx].GetCubeFaceIdxes(), true);
-		cubes[curIdx].UpdateCubeRenderers();
+		cubes[curIdx].UpdateCubeRenderers(colorblindDetected ? 4 : 0);
 		for (float t = 0; t < 1f; t += Time.deltaTime * speed)
 		{
 			cubes[curIdx].transform.localRotation = Quaternion.LerpUnclamped(offsetRotation, Quaternion.Euler(Vector3.zero), t);
@@ -247,7 +269,7 @@ public class InstantInsanityModule : MonoBehaviour {
 		}
 		cubes[curIdx].transform.localRotation = Quaternion.Euler(Vector3.zero);
 		//for (var x = 0; x < cubes.Length; x++)
-			
+
 		waiting = false;
 	}
 	IEnumerator HandleCubeResizeAnim(int cubeIdx, bool restoring = false)
@@ -266,7 +288,7 @@ public class InstantInsanityModule : MonoBehaviour {
 		}*/
 		mAudio.PlaySoundAtTransform(restoring ? "Whoosh" : "Whoop", transform);
 		for (float t = 0; t < 1f; t += Time.deltaTime * speed)
-        {
+		{
 			cubes[cubeIdx].transform.localPosition = Vector3.LerpUnclamped(storedCubesLocalPos[cubeIdx], storedBigCubeLocalPos, restoring ? 1 - t : t);
 			cubes[cubeIdx].transform.localScale = Vector3.LerpUnclamped(storedCubesLocalScale[cubeIdx], storedBigCubeLocalScale, restoring ? 1 - t : t);
 			yield return null;
@@ -295,7 +317,7 @@ public class InstantInsanityModule : MonoBehaviour {
 			cubes[x].gameObject.SetActive(x != oldCubeIdx);*/
 		mAudio.PlaySoundAtTransform("Whoosh", transform);
 		for (float t = 0; t < 1f; t += Time.deltaTime * speed * 2f)
-        {
+		{
 			cubes[oldCubeIdx].transform.localPosition = Vector3.LerpUnclamped(storedBigCubeLocalPos, storedCubesLocalPos[oldCubeIdx], t);
 			cubes[oldCubeIdx].transform.localScale = Vector3.LerpUnclamped(storedBigCubeLocalScale, storedCubesLocalScale[oldCubeIdx], t);
 			yield return null;
@@ -318,9 +340,9 @@ public class InstantInsanityModule : MonoBehaviour {
 		yield break;
 	}
 	void HandleSubmit(bool fastSubmit = false)
-    {
+	{
 		if (fastSubmit)
-        {
+		{
 			QuickLog("Submitted current state (Logged face order U, F, R, B, L, D):");
 			foreach (var cube in cubes)
 				QuickLog(cube.GetCubeFaceIdxes().Select(a => "RYGB"[a]).Join(", "));
@@ -335,11 +357,12 @@ public class InstantInsanityModule : MonoBehaviour {
 				for (var p = 0; p < miscCubes.Length; p++)
 				{
 					miscCubes[p].gameObject.SetActive(true);
-					miscCubes[p].AssignNewCubeFaceIdxes(cubes[p].GetCubeFaceIdxes(), true);
+					miscCubes[p].AssignNewCubeFaceIdxes(cubes[p].GetCubeFaceIdxes());
+					miscCubes[p].UpdateCubeRenderers(colorblindDetected ? 4 : 0);
 				}
 				foreach (var groupedRenderers in checkerDisplays)
 					foreach (MeshRenderer aRender in groupedRenderers.allRenderers)
-                        aRender.enabled = true;
+						aRender.enabled = true;
 			}
 			else
 			{
@@ -357,7 +380,7 @@ public class InstantInsanityModule : MonoBehaviour {
 		}
 		else
 			StartCoroutine(HandleSubmitAnim());
-    }
+	}
 	IEnumerator HandleSubmitAnim()
 	{
 		if (curCubeIdx != -1)
@@ -377,7 +400,8 @@ public class InstantInsanityModule : MonoBehaviour {
 		{
 			var curCubeFaceIdxes = cubes[x].GetCubeFaceIdxes();
 			miscCubes[x].gameObject.SetActive(true);
-			miscCubes[x].AssignNewCubeFaceIdxes(curCubeFaceIdxes, true);
+			miscCubes[x].AssignNewCubeFaceIdxes(curCubeFaceIdxes);
+			miscCubes[x].UpdateCubeRenderers(colorblindDetected ? 4 : 0);
 			for (float t = 0; t < 1f; t += Time.deltaTime * speed / 2f)
 			{
 				miscCubes[x].transform.localPosition = Vector3.Lerp(storedMiscCubesLocalPos[x] + Vector3.up * 3, storedMiscCubesLocalPos[x], Mathf.Clamp01(t));
@@ -448,5 +472,69 @@ public class InstantInsanityModule : MonoBehaviour {
 				cubes[x].transform.localScale = storedCubesLocalScale[x];
 			waiting = false;
 		}
-    }
+	}
+#pragma warning disable 414
+	private readonly string TwitchHelpMessage = "\"!{0} 1/2/3/4\" [Presses the specified cube] | \"!{0}\" c/a/u/d/l/r [Presses the specified rotation buttons to rotate the cube CW, CCW, up, down, left, or right] | Previous mentioned commands may be chained, for example \"!{0} 1u3dl4r2ac\" | \"!{0} submit\" [Submits current configurations.] | \"!{0} colorblind/colourblind\" [Toggles colorblind mode.]";
+#pragma warning restore 414
+	IEnumerator ProcessTwitchCommand(string command)
+    {
+		var regexSubmit = Regex.Match(command, @"^(submit)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+		var regexColorblind = Regex.Match(command, @"^(colou?rblind)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+		if (regexSubmit.Success)
+        {
+			yield return null;
+			submitSelectable.OnInteract();
+			yield return "solve";
+			yield return "strike";
+			yield break;
+        }
+		else if (regexColorblind.Success)
+        {
+			yield return null;
+			colorblindDetected ^= true;
+			HandleColorblindToggle();
+			yield break;
+		}
+		var allowedCmdCubeSelects = "1234";
+		var allowedCmdCubeRotate = "caudlr";
+		var itemsSelectableAll = new List<KMSelectable>();
+		var isReleaseBtnCmd = new List<bool>();
+		var cmdPartUpper = command.ToLowerInvariant().Where(a => !char.IsWhiteSpace(a)).Join("");
+		foreach (char aChar in cmdPartUpper)
+        {
+			var idxRotateCmd = allowedCmdCubeRotate.IndexOf(aChar);
+			var idxCubeCmd = allowedCmdCubeSelects.IndexOf(aChar);
+			if (idxRotateCmd != -1)
+			{
+				itemsSelectableAll.Add(cubeRotateSelectables[idxRotateCmd]);
+				isReleaseBtnCmd.Add(false);
+				itemsSelectableAll.Add(cubeRotateSelectables[idxRotateCmd]);
+				isReleaseBtnCmd.Add(true);
+			}
+			else if (idxCubeCmd != -1)
+			{
+				itemsSelectableAll.Add(cubeSelectables[idxCubeCmd]);
+				isReleaseBtnCmd.Add(false);
+			}
+			else
+			{
+				yield return string.Format("senttochaterror Specified command portion \"{0}\" does not correspond to a cube or rotate button.", aChar);
+				yield break;
+			}
+		}
+		if (itemsSelectableAll.Any())
+        {
+			yield return null;
+			for (var p = 0; p < itemsSelectableAll.Count; p++)
+            {
+				if (isReleaseBtnCmd[p])
+					itemsSelectableAll[p].OnInteractEnded();
+				else
+					itemsSelectableAll[p].OnInteract();
+				while (waiting)
+					yield return string.Format("trycancel Command handler has been interruputed after {0} action(s)!", p + 1);
+				yield return new WaitForSeconds(0.05f);
+			}
+        }
+	}
 }

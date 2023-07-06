@@ -597,7 +597,7 @@ public class LatinSudokuScript : MonoBehaviour {
 	{
 		var parameters = command.ToLowerInvariant().Split(' ');
 		var regexSpeed = Regex.Match(command, @"^\s*setspeed\s\d+(\.\d+)*$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-		var regexReset = Regex.Match(command, @"^reset$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+		var regexReset = Regex.Match(command, @"^(reset|clear)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 		var regexAutoRotate = Regex.Match(command, @"^autorotate$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 		if (regexAutoRotate.Success)
         {

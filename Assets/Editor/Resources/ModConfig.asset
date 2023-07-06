@@ -23,7 +23,7 @@ MonoBehaviour:
     Actual 4x4x4 Sudoku (Inspired by Aaron F. Bianchi''s Actual 3D Sudoku, original
     visuals by SpeakingEvil)
 
-    Instant Insanity (Inspired by Survivor)
+    Instant Insanity (Inspired by a Survivor minigame)
 
     Puzzle Pandemonium (Module idea by Deaf)
 
@@ -38,6 +38,6 @@ MonoBehaviour:
 
 
 '
-  version: 1.2.1
+  version: 1.2.2
   outputFolder: build
   previewImage: {fileID: 2800000, guid: ecd37734076f9f14d9a38a9aed5f7f60, type: 3}
