@@ -4,16 +4,14 @@ using UnityEngine;
 
 public class ESudokuTile : MonoBehaviour {
 
-
-    protected bool hPanelRequired = false;
-    protected bool vPanelRequired = false;
-
-    public bool requireHorizontalPanel { get { return hPanelRequired; } }
-    public bool requireVerticalPanel { get { return vPanelRequired; } }
+    public virtual bool requireHorizontalPanel { get { return false; } }
+    public virtual bool requireVerticalPanel { get { return false; } }
 
     [SerializeField]
     protected GameObject hPanelContents, vPanelContents;
-    protected Renderer centerTileRenderer;
+    public Renderer centerTileRenderer;
+
+    private bool revealed;
 
     EncryptedSudokuScript baseScript;
 	public void AssignCore(EncryptedSudokuScript mainHandler)
@@ -23,8 +21,17 @@ public class ESudokuTile : MonoBehaviour {
     }
     protected virtual void SetupCell()
     {
-
+        var lettersAssigned = baseScript.GetLetterRefs();
     }
+    public virtual IEnumerator HandleCellActivate()
+    {
+        yield break;
+    }
+    public void SetRevealState(bool newState)
+    {
+        revealed = newState;
+    }
+
     public virtual string GetTPCellHelpInfo()
     {
         return "";
