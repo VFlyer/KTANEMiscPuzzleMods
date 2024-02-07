@@ -5,7 +5,8 @@ using System.Linq;
 
 public class FoaboruPuzzleScript : MonoBehaviour {
 	public KMSelectable[] gridSelectables, submitButtons;
-
+	public KMBombModule modSelf;
+	public KMAudio mAudio;
 	const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 	bool[][][] possiblePiecePlacements = new string[][] { // A list of all possible pieces and their rotations.
@@ -44,16 +45,25 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-		selectedTiles = new bool[10, 10];
-		tileIdxesAll = new int[10, 10];
+		selectedTiles = new bool[8, 8];
+		tileIdxesAll = new int[8, 8];
 
-		var exampleBoard = (new string[]{  "OOOOO-O-OO", "-O-O-OOOOO" , "OOOOOO-OO-" , "OO-OO-OOOO", "-OO-OOO-O-" , "OO-OO-OO-O" , "OOOOOO-OOO", "O-O-OOOOOO" , "OO-OO-OO-O" , "OOOOOO-O-O" }).Select(a => a.Select(b => b == 'O').ToArray()).ToArray();
+		var exampleBoard = (new string[]{
+			"O-O-OOOO","OOOOOO-O", "OOOOOOOO", "-O-O-O--","O-OOOOOO", "OOO-OOO-", "-OOOO-OO","OO--OOO-", "--------", "--------"
+			//"OOOOO-O-OO", "-O-O-OOOOO", "OOOOOO-OO-", "OO-OO-OOOO", "-OO-OOO-O-", "OO-OO-OO-O", "OOOOOO-OOO", "O-O-OOOOOO", "OO-OO-OO-O", "OOOOOO-O-O"
+			//"OOOO","-OO-","-OO-"
+		}).Select(a => a.Select(b => b == 'O').ToArray()).ToArray();
 		Debug.LogFormat(exampleBoard.Select(a => a.Select(b => b ? "o" : "-").Join("")).Join(";"));
-		Debug.LogFormat(GetAllPossiblePlacements(exampleBoard).Select(a => string.Format("[{0}: {1}]", possiblePiecePlacements[a.Key].Select(b => b.Select(c => c ? "o" : "-").Join("")).Join(";"), string.Format("{0}{1}", alphabet[a.Value.Last()], a.Value.First() + 1))).Join(";"));
-		Debug.LogFormat("{0} found",CountSolutions(exampleBoard));
-		//var trimmedEmpty = TrimBoard(new bool[][] { new bool[10], new bool[10], new bool[10], new bool[10], new bool[10], new bool[10], new bool[10], new bool[10], new bool[10], new bool[10] });
-		//Debug.LogFormat(trimmedEmpty.Select(a => a.Select(b => b ? "o" : "-").Join("")).Join(";"));
-
+		var trimmedExample = TrimBoard(exampleBoard);
+		Debug.LogFormat(trimmedExample.Select(a => a.Select(b => b ? "o" : "-").Join("")).Join(";"));
+		var exampleAllPossiblePlacements = GetAllPossiblePlacements(trimmedExample);
+		Debug.LogFormat("{0}",exampleAllPossiblePlacements.Count);
+		Debug.LogFormat(exampleAllPossiblePlacements.Select(a => string.Format("[{0}: {1}]", possiblePiecePlacements[a.Key].Select(b => b.Select(c => c ? "o" : "-").Join("")).Join(";"), string.Format("{0}{1}", alphabet[a.Value.Last()], a.Value.First() + 1))).Join(";"));
+		Debug.LogFormat("Solution? {0}", IsBoardPossible(trimmedExample));
+		var solutionCount = CountSolutions(trimmedExample);
+		Debug.LogFormat("Solution Type? {0}", new[] { "Impossible", "Unique", "Ambiguous" }[solutionCount]);
+		
+		GeneratePuzzle();
 	}
 
 	void GeneratePuzzle()
@@ -61,7 +71,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 
     }
 
-	bool DoesPatternFitBoard(bool[][] _2Dboard, bool[][] pattern, int rIdx = 0, int cIdx = 0, bool invertCondition = false)
+	bool DoesPatternFitBoard(bool[][] _2Dboard, bool[][] pattern, int rIdx = 0, int cIdx = 0, bool checkEmptyVsFilled = false)
     {
 		// Assume the 2D board and pattern are rectangular.
 		// Basically, overlay the pattern on top of the 2D board, and check if the values would match with the pattern shown, skipping over blank tiles in patterns.
@@ -69,44 +79,33 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		for (var dY = 0; dY < pattern.Length && validFit; dY++)
         {
 			for (var dX = 0; dX < pattern[0].Length && validFit; dX++)
-				validFit &= !pattern[dY][dX] || (_2Dboard[rIdx + dY][cIdx + dX] ^ invertCondition);
+				validFit &= !pattern[dY][dX] || (_2Dboard[rIdx + dY][cIdx + dX] ^ checkEmptyVsFilled);
 		}
 		return validFit;
     }
-	bool IsBoardPossibleTheoretical(bool[][] _2Dboard)
+	bool IsBoardPossibleTheoretical(bool[][] _2Dboard, List<KeyValuePair<int, int[]>> determinedPlacements = null)
     {
+		var allPossiblePlacements = determinedPlacements ?? GetAllPossiblePlacements(_2Dboard);
 		var visitedCoords = new List<int[]>();
+		foreach (var keyPlacement in allPossiblePlacements)
+        {
+			var startCoord = keyPlacement.Value;
+			var pattern = possiblePiecePlacements[keyPlacement.Key];
+			for (var rowPat = 0; rowPat < pattern.Length; rowPat++)
+				for (var colPat = 0; colPat < pattern[0].Length; colPat++)
+					if (pattern[rowPat][colPat])
+					{
+						var coordAfterShift = new[] { startCoord[0] + rowPat, startCoord[1] + colPat };
+						if (!visitedCoords.Any(a => a.SequenceEqual(coordAfterShift)))
+						visitedCoords.Add(coordAfterShift);
+					}
+		}
+
 		for (var row = 0; row < _2Dboard.Length; row++)
 			for (var col = 0; col < _2Dboard[0].Length; col++)
             {
-				var coordLoop = new[] { row, col };
-				if (_2Dboard[row][col] && !visitedCoords.Any(a => a.SequenceEqual(coordLoop)))
-                {
-					var visitedCellsCurBatch = new List<int[]> { coordLoop };
-					var visitedCellsCurGroup = new List<int[]>();
-					while (visitedCellsCurBatch.Any())
-                    {
-						var newBatch = new List<int[]>();
-						foreach (int[] coord in visitedCellsCurBatch)
-                        {
-							visitedCellsCurGroup.Add(coord);
-							var offsetModifs = new int[][] { new[] { 0, 1 }, new[] { 0, -1 }, new[] { 1, 0 }, new[] { -1, 0 }, };
-                            foreach (var offset in offsetModifs)
-                            {
-								var coordAfterOffset = new[] { coord[0] + offset[0], coord[1] + offset[1] };
-								if (coordAfterOffset[0] >= 0 && coordAfterOffset[0] < _2Dboard.Length &&
-									coordAfterOffset[1] >= 0 && coordAfterOffset[1] < _2Dboard[0].Length &&
-									!newBatch.Any(a => a.SequenceEqual(coordAfterOffset)) && !visitedCellsCurGroup.Any(a => a.SequenceEqual(coordAfterOffset)))
-									newBatch.Add(coordAfterOffset);
-                            }
-                        }
-						visitedCellsCurBatch = newBatch;
-                    }
-					if (visitedCellsCurGroup.Count % 4 != 0)
-						return false;
-					else
-						visitedCoords.AddRange(visitedCellsCurGroup);
-				}
+				if (_2Dboard[row][col] && !visitedCoords.Any(a => a[0] == row && a[1] == col))
+					return false;
             }
 		return true;
 	}
@@ -135,11 +134,11 @@ public class FoaboruPuzzleScript : MonoBehaviour {
         }
 		return newGrid;
     }
-	int CountSolutions(bool[][] _2Dboard, List<KeyValuePair<int, int[]>> determinedPlacements = null, int idxStartSearch = 0)
+	int CountSolutions(bool[][] _2Dboard, List<KeyValuePair<int, int[]>> determinedPlacements = null)
     {
 		var allPossiblePlacements = determinedPlacements ?? GetAllPossiblePlacements(_2Dboard);
 		var countedSolutions = 0;
-		for (var x = idxStartSearch; x < allPossiblePlacements.Count && countedSolutions < 2; x++)
+		for (var x = 0; x < allPossiblePlacements.Count && countedSolutions < 2; x++)
         {
 			var curPlacement = allPossiblePlacements[x];
 			var new2DBoard = _2Dboard.Select(a => a.ToArray()).ToArray();
@@ -148,15 +147,36 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			for (var r = 0; r < patternFromPlacement.Length; r++)
 				for (var c = 0; c < patternFromPlacement[0].Length; c++)
 					new2DBoard[rCFromPlacement[0] + r][rCFromPlacement[1] + c] ^= patternFromPlacement[r][c];
-			if (TrimBoard(new2DBoard).Length == 0)
-				countedSolutions++;
-			else if (IsBoardPossibleTheoretical(new2DBoard))
-			{ 
-				var countedSolutionsRecursive = CountSolutions(new2DBoard, allPossiblePlacements, x + 1);
-				countedSolutions += countedSolutionsRecursive;
-			}
+			var newAllowedPlacements = allPossiblePlacements.Skip(x + 1)
+				.Where(a => DoesPatternFitBoard(new2DBoard, possiblePiecePlacements[a.Key], a.Value[0], a.Value[1])).ToList();
+			if (!new2DBoard.Any(a => a.Any(b => b)))
+				return 1;
+			else if (newAllowedPlacements.Any() && IsBoardPossibleTheoretical(new2DBoard, newAllowedPlacements))
+				countedSolutions += CountSolutions(new2DBoard, newAllowedPlacements);
         }
 		return countedSolutions;
+    }
+	bool IsBoardPossible(bool[][] _2Dboard, List<KeyValuePair<int, int[]>> determinedPlacements = null)
+    {
+		var allPossiblePlacements = determinedPlacements ?? GetAllPossiblePlacements(_2Dboard);
+		var foundSolution = false;
+		for (var x = 0; x < allPossiblePlacements.Count && !foundSolution; x++)
+        {
+			var curPlacement = allPossiblePlacements[x];
+			var new2DBoard = _2Dboard.Select(a => a.ToArray()).ToArray();
+			var patternFromPlacement = possiblePiecePlacements[curPlacement.Key];
+			var rCFromPlacement = curPlacement.Value;
+			for (var r = 0; r < patternFromPlacement.Length; r++)
+				for (var c = 0; c < patternFromPlacement[0].Length; c++)
+					new2DBoard[rCFromPlacement[0] + r][rCFromPlacement[1] + c] ^= patternFromPlacement[r][c];
+			var newAllowedPlacements = allPossiblePlacements.Skip(x + 1)
+				.Where(a => DoesPatternFitBoard(new2DBoard, possiblePiecePlacements[a.Key], a.Value[0], a.Value[1])).ToList();
+			if (!new2DBoard.Any(a => a.Any(b => b)))
+				return true;
+			else if (newAllowedPlacements.Any() && IsBoardPossibleTheoretical(new2DBoard, newAllowedPlacements))
+				foundSolution |= IsBoardPossible(new2DBoard, newAllowedPlacements);
+        }
+		return foundSolution;
     }
 	List<KeyValuePair<int, int[]>> GetAllPossiblePlacements(bool[][] _2Dboard, int startScanIdx = 0)
     {
@@ -171,6 +191,6 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 					if (DoesPatternFitBoard(trimmedBoard, curPattern, rIdx, cIdx))
 						validPlacements.Add(new KeyValuePair<int, int[]>(pieceIdx, new[] { rIdx, cIdx } ));
 		}
-		return validPlacements;
+		return validPlacements; // Valid placements consist of a piece IDx, and a row,col coordinate.
     }
 }
