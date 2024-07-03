@@ -252,6 +252,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   gridSelectables: []
   submitButtons: []
+  modSelf: {fileID: 1237584057}
+  mAudio: {fileID: 1237584056}
 --- !u!114 &1237584055
 MonoBehaviour:
   m_ObjectHideFlags: 0

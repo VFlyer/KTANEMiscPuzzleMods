@@ -35,7 +35,7 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 	PuzzleType currentPuzzle;
 	static int modIDCnt;
 	int moduleID;
-	int movesBeforeSwitching;
+	int movesBeforeSwitching, lastIdxPressed = -1;
 	bool interactable = false, moduleSolved;
 
 	const float animSpeed = 2f;
@@ -82,7 +82,7 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
         }
         for (int idx = 0; idx < allPossiblePuzzleTypes.Length; idx++)
 			LogPuzzleBoard(allPossiblePuzzleTypes[idx], allPossiblePuzzleTypes[idx] != PuzzleType.Lights_Out);
-		movesBeforeSwitching = Random.Range(3, 15);
+		movesBeforeSwitching = Random.Range(3, 10);
 		QuickLog("Switching puzzles after {0} move(s) or {1} is solved.", movesBeforeSwitching, currentPuzzle.ToString().Replace("_", " "));
 		StartCoroutine(RevealPuzzleAnim());
 
@@ -280,7 +280,7 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 			currentPuzzle = alterationInteractionChain.Where(a => a != currentPuzzle).PickRandom();
 			if (alterationInteractionChain.Count > 1)
 			{
-				movesBeforeSwitching = Random.Range(3, 15);
+				movesBeforeSwitching = Random.Range(3, 10);
 				QuickLog("Switching puzzles after {0} move(s) or {1} is solved.", movesBeforeSwitching, currentPuzzle.ToString().Replace("_", " "));
 			}
 			else
@@ -395,8 +395,11 @@ public class PuzzlePandemoniumCore : MonoBehaviour {
 		if (!curPuzzleScript.GetCurrentBoard().SequenceEqual(lastBoardState))
         {
 			curPuzzleScript.DisplayCurrentBoard();
-			if (movesBeforeSwitching > 0)
+			if (movesBeforeSwitching > 0 && lastIdxPressed != idx)
+			{
 				movesBeforeSwitching--;
+				lastIdxPressed = idx;
+			}
 			if (alterationInteractionChain.Count > 1)
 			{
 				var nextAffectedPuzzleType = alterationInteractionChain[(alterationInteractionChain.IndexOf(currentPuzzle) + 1) % alterationInteractionChain.Count];
