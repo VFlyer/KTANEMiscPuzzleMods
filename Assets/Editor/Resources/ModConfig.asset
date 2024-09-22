@@ -38,6 +38,6 @@ MonoBehaviour:
 
 
 '
-  version: 1.3.0
+  version: 1.3.1
   outputFolder: build
   previewImage: {fileID: 2800000, guid: ecd37734076f9f14d9a38a9aed5f7f60, type: 3}

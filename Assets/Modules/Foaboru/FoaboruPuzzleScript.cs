@@ -6,6 +6,7 @@ using Random = UnityEngine.Random;
 
 public class FoaboruPuzzleScript : MonoBehaviour {
 	public KMSelectable[] gridSelectables, submitButtons;
+	public MeshRenderer[] gridRenders;
 	public KMBombModule modSelf;
 	public KMAudio mAudio;
 	const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -40,7 +41,10 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		new[] { "OO-","-OO" },
 		new[] { "O-","OO","-O" },
 	}.Select(a => a.Select(b => b.Select(c => c == 'O').ToArray()).ToArray()).ToArray();
-	// This is all converted by using the symbols denoted for filled and into a series of bool arrays. In this case, O is filled, - is empty.
+	// This is all converted by using the symbols denoted for filled and into a series of bool arrays.
+	// In this case, O is filled, - is empty.
+
+	static Color[] colorsRender = new[] { Color.black, Color.grey, Color.white };
 
 	static int modIDCnt;
 	int moduleID;
@@ -48,6 +52,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 	int[,] tileIdxesAll;
 	bool[,] selectedTiles;
 	static List<KeyValuePair<int, int[]>> allPossiblePlacementsGivenBoard;
+	bool checkAmbiguityOnGen = false;
 
 	void QuickLog(string toLog, params object[] args)
     {
@@ -56,6 +61,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+		// Entire section for generating an example puzzle.
 		/*
 		var exampleBoard = (new string[]{
 			//"O-O-OOOO","OOOOOO-O", "OOOOOOOO", "-O-O-O--","O-OOOOOO", "OOO-OOO-", "-OOOO-OO","OO--OOO-", "--------", "--------"
@@ -77,19 +83,139 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		selectedTiles = new bool[rowCount, colCount];
 		tileIdxesAll = new int[rowCount, colCount];
 		GeneratePuzzle();
+        for (var x = 0; x < gridSelectables.Length; x++)
+        {
+			var y = x;
+			gridSelectables[x].OnInteract += delegate {
+				HandleBtnPress(y);
+				return false;
+			};
+        }
 	}
+	void HandleBtnPress(int idx)
+    {
+		var rowIdx = idx / colCount;
+		var colIdx = idx % colCount;
+		if (selectedTiles[rowIdx, colIdx])
+		{
+			tileIdxesAll[rowIdx, colIdx] = (tileIdxesAll[rowIdx, colIdx] + 1) % 3;
+			UpdatePuzzle();
+		}
 
+    }
 	void GeneratePuzzle()
     {
 		var newBoard = new bool[rowCount][];
 		for (var x = 0; x < rowCount; x++)
 			newBoard[x] = new bool[colCount];
+		var boardColorIdx = new int[rowCount][];
+		for (var x = 0; x < rowCount; x++)
+			boardColorIdx[x] = new int[colCount];
 		allPossiblePlacementsGivenBoard = GetAllPossiblePlacements(newBoard, true);
-		Debug.LogFormat(allPossiblePlacementsGivenBoard.Select(a => string.Format("[{0}: {1}]", possiblePiecePlacements[a.Key].Select(b => b.Select(c => c ? "o" : "-").Join("")).Join(";"), string.Format("{0}{1}", alphabet[a.Value.Last()], a.Value.First() + 1))).Join(";"));
-		var ixesShuffled = Enumerable.Range(0, allPossiblePlacementsGivenBoard.Count);
+		//Debug.LogFormat(allPossiblePlacementsGivenBoard.Select(a => string.Format("[{0}: {1}]", possiblePiecePlacements[a.Key].Select(b => b.Select(c => c ? "o" : "-").Join("")).Join(";"), string.Format("{0}{1}", alphabet[a.Value.Last()], a.Value.First() + 1))).Join(";"));
+		var idxesShuffled = Enumerable.Range(0, allPossiblePlacementsGivenBoard.Count).ToList();
+		var firstPlacementIdx = idxesShuffled.PickRandom();
+		idxesShuffled.Remove(firstPlacementIdx);
 
-
+		var firstPlacementCoord = allPossiblePlacementsGivenBoard[firstPlacementIdx].Value;
+		var firstPlacementPiece = possiblePiecePlacements[allPossiblePlacementsGivenBoard[firstPlacementIdx].Key];
+		var rowIdxFirst = firstPlacementCoord[0];
+		var colIdxFirst = firstPlacementCoord[1];
+        for (var deltaR = 0; deltaR < firstPlacementPiece.Length; deltaR++)
+			for (var deltaC = 0; deltaC < firstPlacementPiece[deltaR].Length; deltaC++)
+				if (firstPlacementPiece[deltaR][deltaC])
+				{
+                    newBoard[rowIdxFirst + deltaR][colIdxFirst + deltaC] = true;
+                    boardColorIdx[rowIdxFirst + deltaR][colIdxFirst + deltaC] = 1;
+				}
+		idxesShuffled.Shuffle();
+		while (idxesShuffled.Any())
+        {
+			var nextIdx = idxesShuffled.PickRandom();
+			var removeOption = false;
+			var curSetCoord = allPossiblePlacementsGivenBoard[nextIdx].Value;
+			var curSetPiece = possiblePiecePlacements[allPossiblePlacementsGivenBoard[nextIdx].Key];
+			var curSetRowIdx = curSetCoord[0];
+			var curSetColIdx = curSetCoord[1];
+			// First check: 
+			// If the piece overlaps with another piece on the field, remove it.
+			for (var dR = 0; dR < curSetPiece.Length && !removeOption; dR++)
+				for (var dC = 0; dC < curSetPiece[dR].Length && !removeOption; dC++)
+					removeOption |= newBoard[dR + curSetRowIdx][dC + curSetColIdx] && curSetPiece[dR][dC];
+			// Second check (to optimize later on):
+			// If the placed piece does not allow a unique solution, remove it.
+			if (checkAmbiguityOnGen && !removeOption)
+            {
+				var theoreticalBoard = newBoard.Select(a => a.ToArray()).ToArray();
+				for (var dR = 0; dR < curSetPiece.Length && !removeOption; dR++)
+					for (var dC = 0; dC < curSetPiece[dR].Length && !removeOption; dC++)
+						theoreticalBoard[dR + curSetRowIdx][dC + curSetColIdx] |= curSetPiece[dR][dC];
+				removeOption |= CountSolutions(theoreticalBoard) > 1;
+			}
+			if (removeOption)
+			{
+				idxesShuffled.Remove(nextIdx);
+				continue;
+			}
+			// Final check:
+			// The piece must be adjacent to another piece on the board, connected to at most 2 colors.
+			var distinctColors = new List<int>();
+			for (var dR = 0; dR < curSetPiece.Length && !removeOption; dR++)
+				for (var dC = 0; dC < curSetPiece[dR].Length && !removeOption; dC++)
+				{
+					// For each "mino", check for adjacencies of another piece, that is not itself.
+					if (curSetRowIdx + 1 + dR < newBoard.Length && newBoard[dR + curSetRowIdx + 1][dC + curSetColIdx]
+						&& (dR + 1 >= curSetPiece.Length || !curSetPiece[dR + 1][dC]))
+						distinctColors.Add(boardColorIdx[curSetRowIdx + 1 + dR][curSetColIdx + dC]);
+					if (curSetRowIdx + dR > 0 && newBoard[dR + curSetRowIdx - 1][dC + curSetColIdx]
+						&& (dR <= 0 || !curSetPiece[dR - 1][dC]))
+						distinctColors.Add(boardColorIdx[curSetRowIdx - 1 + dR][curSetColIdx + dC]);
+					if (curSetColIdx + 1 + dC < newBoard[curSetRowIdx].Length && newBoard[dR + curSetRowIdx][dC + curSetColIdx + 1]
+						&& (dC + 1 >= curSetPiece[dR].Length || !curSetPiece[dR][dC + 1]))
+						distinctColors.Add(boardColorIdx[curSetRowIdx + dR][curSetColIdx + dC + 1]);
+					if (curSetColIdx + dC > 0 && newBoard[dR + curSetRowIdx][dC + curSetColIdx - 1]
+						&& (dC <= 0 || !curSetPiece[dR][dC - 1]))
+						distinctColors.Add(boardColorIdx[curSetRowIdx + dR][curSetColIdx + dC - 1]);
+				}
+			var allowedColors = Enumerable.Range(1, 3).Except(distinctColors).ToList();
+			if (allowedColors.Count >= 3) // If all 3 options are possible, reroll it until it doesn't.
+				continue;
+			else if (allowedColors.Count < 1) // Otherwise if no options are possible, remove it.
+				idxesShuffled.Remove(nextIdx);
+			else
+            {
+				var firstColorNotUsed = allowedColors.First();
+				for (var deltaR = 0; deltaR < curSetPiece.Length; deltaR++)
+					for (var deltaC = 0; deltaC < curSetPiece[deltaR].Length; deltaC++)
+						if (curSetPiece[deltaR][deltaC])
+						{
+							newBoard[curSetRowIdx + deltaR][curSetColIdx + deltaC] = true;
+							boardColorIdx[curSetRowIdx + deltaR][curSetColIdx + deltaC] = firstColorNotUsed;
+						}
+			}
+		}
+		QuickLog("Generated board:");
+		for (var x = 0; x < rowCount; x++)
+			QuickLog(newBoard[x].Select(a => a ? "O" : "-").Join(""));
+		QuickLog("One possible solution:");
+		for (var x = 0; x < rowCount; x++)
+			QuickLog(boardColorIdx[x].Select(a => "XKAW"[a]).Join(""));
+        for (var row = 0; row < rowCount; row++)
+			for (var col = 0; col < colCount; col++)
+				selectedTiles[row, col] = newBoard[row][col];
+		UpdatePuzzle();
 	}
+	void UpdatePuzzle()
+    {
+		for (var x = 0; x < gridRenders.Length; x++)
+        {
+			var rowIdx = x / colCount;
+			var colIdx = x % colCount;
+			gridRenders[x].enabled = selectedTiles[rowIdx, colIdx];
+			gridRenders[x].material.color = colorsRender[tileIdxesAll[rowIdx, colIdx]];
+		}
+    }
+
 
 	bool DoesPatternFitBoard(bool[][] _2Dboard, bool[][] pattern, int rIdx = 0, int cIdx = 0, bool checkEmptyVsFilled = false)
     {
@@ -164,47 +290,56 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		return newGrid;
     }
 
+	List<KeyValuePair<int, int[]>>[] PieceConfigsPerGroup(IEnumerable<IEnumerable<int>> knownGroupIdxes, List<KeyValuePair<int, int[]>> determinedPlacements)
+    {
+		var output = new List<KeyValuePair<int, int[]>>[knownGroupIdxes.Count()];
+		for (var x = 0; x < knownGroupIdxes.Count(); x++)
+        {
+			var curGroup = knownGroupIdxes.ElementAt(x);
+			var piecesAllowed = new List<KeyValuePair<int, int[]>>();
+			foreach (var placement in determinedPlacements)
+				if (curGroup.All(a => placement.Value.Contains(a)))
+					piecesAllowed.Add(placement);
+			output[x] = piecesAllowed;
+		}
+		return output;
+    }
+
 	List<KeyValuePair<int, int[]>> CollapseCombinations(bool[][] _2Dboard, List<KeyValuePair<int, int[]>> determinedPlacements = null)
     {
 		// Known as the "Human Deduction" section
 
 		var allPossiblePlacements = determinedPlacements ?? GetAllPossiblePlacements(_2Dboard);
 		var idxesGroupedPlacement = Enumerable.Range(0, allPossiblePlacements.Count).ToList();
-		var knownGroupIdxes = new List<List<int>>();
 		var altered2DBoard = _2Dboard.Select(a => a.ToArray()).ToArray();
 		var boardWidth = _2Dboard.Length;
-		var boardLength = _2Dboard[0].Length;
-		var collapsable = false;
+		var boardLength = boardWidth == 0 ? 0 : _2Dboard[0].Length;
+		var knownGroupIdxes = new List<List<int>>();
 		for (var x = 0; x < boardWidth; x++)
 			for (var y = 0; y < boardLength; y++)
 				if (_2Dboard[x][y])
 					knownGroupIdxes.Add(new List<int>() { x * boardLength + y });
-		var adjacentModifiers = new int[] { -boardLength, 1, boardLength, -1 };
+		// Create a set of adjacent pairs on the grid, that connects another piece.
+		var adjacentPairs = new List<int[]>();
+        for (var x = 0; x < boardLength * boardWidth; x++)
+        {
+			if (!altered2DBoard[x / boardLength][x % boardLength]) continue;
+
+			if (x % boardLength + 1 < boardLength && altered2DBoard[x / boardLength][x % boardLength + 1])
+				adjacentPairs.Add(new[] { x, x + 1 });
+			if (x / boardLength + 1 < boardWidth && altered2DBoard[x / boardLength + 1][x % boardLength])
+				adjacentPairs.Add(new[] { x, x + boardLength });
+		}
+		var collapsable = false;
+		var idxesFilled = Enumerable.Range(0, boardLength * boardWidth).Where(x => altered2DBoard[x / boardLength][x % boardLength]).ToList();
 		do
 		{
-			var scannedGroups = knownGroupIdxes.Select(a => a.ToArray()).ToArray();
-			foreach (var group in scannedGroups)
-			{
-				if (group.Length >= pieceSize) continue;
-				// If we know that the current group has at least 4 adjacent tiles, we can assume there is already a piece that can be formed.
-				var scannedCells = new List<int>();
-				for (var x = 0; x < adjacentModifiers.Length; x++)
-				{
-					var y = x;
-					var curScanGroup = group.Where(a =>
-					new[] { a / boardLength > 0, a % boardLength != boardLength - 1, a + 1 < boardWidth, a % boardLength > 0 }[y] &&
-					!group.Contains(a + adjacentModifiers[y]) && altered2DBoard[a / boardLength][a % boardLength]).ToList();
-					for (var d = 0; d < pieceSize; d++)
-					{
-						var nextScanGroup = new List<int>();
-						foreach (var idx in curScanGroup)
-                        {
+			var lastKnownGroupIdxes = knownGroupIdxes.Select(a => a.ToArray()).ToArray();
+			var pieceOptionsPerGroup = PieceConfigsPerGroup(lastKnownGroupIdxes, allPossiblePlacements);
+			var lastAdjacentPairs = adjacentPairs.ToList();
 
-                        }
-						curScanGroup = nextScanGroup;
-					}
-				}
-            }
+
+			collapsable |= lastKnownGroupIdxes.Length != knownGroupIdxes.Count;
 		}
 		while (collapsable);
 		return allPossiblePlacements;
@@ -214,27 +349,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
     {
 		var allPossiblePlacements = determinedPlacements ?? GetAllPossiblePlacements(_2Dboard);
 		// "Human Deduction" section
-		var groupedPlacements = new List<List<int>>();
-		var boardWidth = _2Dboard.Length;
-		var boardLength = _2Dboard[0].Length;
-		foreach (var placement in allPossiblePlacements)
-		{
-			var patternUsed = possiblePiecePlacements[placement.Key];
-			var coordUsed = placement.Value;
-			var idxGroup = new List<int>();
-			for (var row = 0; row < patternUsed.Length; row++)
-				for (var col = 0; col < patternUsed[row].Length; col++)
-					if (patternUsed[row][col])
-					{
-						var idxCreatedFromPat = (boardLength * (coordUsed[0] + row)) + col + coordUsed[1];
-						idxGroup.Add(idxCreatedFromPat);
-					}
-			groupedPlacements.Add(idxGroup);
-		}
-		var idxesGroupedPlacement = Enumerable.Range(0, allPossiblePlacements.Count).ToList();
-
-
-		allPossiblePlacements = idxesGroupedPlacement.Select(a => allPossiblePlacements[a]).ToList();
+		allPossiblePlacements = CollapseCombinations(_2Dboard, allPossiblePlacements);
 		if (_2Dboard.Sum(a => a.Count(b => b)) / 4 == allPossiblePlacements.Count)
 			return 1;
 		// Brute force section
