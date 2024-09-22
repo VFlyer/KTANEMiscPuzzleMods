@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using Random = UnityEngine.Random;
+using System.Text.RegularExpressions;
 
 public class FoaboruPuzzleScript : MonoBehaviour {
 	public KMSelectable[] gridSelectables, submitButtons;
@@ -52,7 +53,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 	int[,] tileIdxesAll;
 	bool[,] selectedTiles;
 	static List<KeyValuePair<int, int[]>> allPossiblePlacementsGivenBoard;
-	bool checkAmbiguityOnGen = false;
+	bool checkAmbiguityOnGen = false, interactable = false, moduleSolved;
 
 	void QuickLog(string toLog, params object[] args)
     {
@@ -87,11 +88,114 @@ public class FoaboruPuzzleScript : MonoBehaviour {
         {
 			var y = x;
 			gridSelectables[x].OnInteract += delegate {
-				HandleBtnPress(y);
+				if (interactable)
+					HandleBtnPress(y);
+				return false;
+			};
+        }
+        for (var x = 0; x < submitButtons.Length; x++)
+        {
+			var y = x;
+			submitButtons[x].OnInteract += delegate {
+				if (interactable)
+					HandleSubmitPress(y);
 				return false;
 			};
         }
 	}
+	IEnumerator SubmitAnimationC()
+    {
+        var idxDepthAnim = new int[][] {
+			new[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 15, 16, 23, 24, 31, 32, 39, 40, 47, 48, 55, 56, 57, 58, 59, 60, 61, 62, 63 },
+            new[] { 9, 10, 11, 12, 13, 14,  17, 22,  25, 30,  33, 38,  41, 46,  49, 50, 51, 52, 53, 54 },
+            new[] { 18, 19, 20, 21,  26, 29,  34, 37,  42, 43, 44, 45 },
+            new[] { 27, 28, 35, 36 },
+		};
+		yield return null;
+		mAudio.PlaySoundAtTransform("musCDrop", transform);
+		for (var x = 0; x < 4; x++)
+            for (float t = 0; t < 1f; t += Time.deltaTime * 2)
+            {
+				for (var n = 0; n < gridRenders.Length; n++)
+					gridRenders[n].material.color = idxDepthAnim[x].Contains(n) ? Color.Lerp(Color.white, Color.black, t) : Color.black;
+				yield return null;
+            }
+		QuickLog("Submitted:");
+		for (var row = 0; row < rowCount; row++)
+        {
+			var strLog = "";
+			for (var col = 0; col < colCount; col++)
+				strLog += selectedTiles[row, col] ? "KAW?"[tileIdxesAll[row, col]] : '-';
+			QuickLog(strLog);
+        }
+		if (SolutionValid())
+        {
+			QuickLog("Submission valid.");
+			mAudio.PlaySoundAtTransform("musCEnd", transform);
+			modSelf.HandlePass();
+			for (float t = 0; t < 1f; t += Time.deltaTime / 3)
+			{
+				for (var n = 0; n < gridRenders.Length; n++)
+					gridRenders[n].material.color = Color.Lerp(Color.green, Color.black, t);
+				yield return null;
+			}
+			for (var n = 0; n < gridRenders.Length; n++)
+				gridRenders[n].material.color = Color.black;
+		}
+        else
+        {
+			QuickLog("Invalid submission. Resetting...");
+			modSelf.HandleStrike();
+			GeneratePuzzle();
+        }
+	}
+	bool SolutionValid()
+    {
+        var uncheckedIdxes = Enumerable.Range(0, colCount * rowCount).Where(a => selectedTiles[a / colCount, a % colCount]).ToList();
+		var groupIdxes = new List<List<int>>();
+		while (uncheckedIdxes.Any())
+        {
+			var firstIdxUnchecked = uncheckedIdxes.First();
+			var targetColorIdx = tileIdxesAll[firstIdxUnchecked / colCount, firstIdxUnchecked % colCount];
+			var foundCells = new List<int>();
+			var curScanCells = new List<int> { firstIdxUnchecked };
+			while (curScanCells.Any())
+            {
+				var nextScanCells = new List<int>();
+				foreach (var curCell in curScanCells)
+                {
+					foundCells.Add(curCell);
+					var colIdxCurCell = curCell % colCount;
+					var rowIdxCurCell = curCell / colCount;
+					if (colIdxCurCell + 1 < colCount && uncheckedIdxes.Contains(colIdxCurCell + 1 + rowIdxCurCell * colCount) && !foundCells.Contains(colIdxCurCell + 1 + rowIdxCurCell * colCount) && tileIdxesAll[rowIdxCurCell, colIdxCurCell + 1] == targetColorIdx)
+						nextScanCells.Add(colIdxCurCell + 1 + rowIdxCurCell * colCount);
+					if (colIdxCurCell > 0 && uncheckedIdxes.Contains(colIdxCurCell - 1 + rowIdxCurCell * colCount) && !foundCells.Contains(colIdxCurCell - 1 + rowIdxCurCell * colCount) && tileIdxesAll[rowIdxCurCell, colIdxCurCell - 1] == targetColorIdx)
+						nextScanCells.Add(colIdxCurCell - 1 + rowIdxCurCell * colCount);
+					if (rowIdxCurCell + 1 < rowCount && uncheckedIdxes.Contains(colIdxCurCell + colCount + rowIdxCurCell * colCount) && !foundCells.Contains(colIdxCurCell + colCount + rowIdxCurCell * colCount) && tileIdxesAll[rowIdxCurCell + 1, colIdxCurCell] == targetColorIdx)
+						nextScanCells.Add(colIdxCurCell + colCount + rowIdxCurCell * colCount);
+					if (rowIdxCurCell > 0 && uncheckedIdxes.Contains(colIdxCurCell - colCount + rowIdxCurCell * colCount) && !foundCells.Contains(colIdxCurCell - colCount + rowIdxCurCell * colCount) && tileIdxesAll[rowIdxCurCell - 1, colIdxCurCell] == targetColorIdx)
+						nextScanCells.Add(colIdxCurCell - colCount + rowIdxCurCell * colCount);
+                }
+				curScanCells = nextScanCells.Distinct().ToList();
+            }
+			groupIdxes.Add(foundCells);
+			uncheckedIdxes.RemoveAll(a => foundCells.Contains(a));
+        }
+		foreach (var invalidGroup in groupIdxes.Where(a => a.Count != 4))
+			QuickLog("Detected invalid group: {0}", invalidGroup.Select(a => string.Format("{0}{1}", alphabet[a % colCount], a / colCount + 1)).Join(","));
+		return !groupIdxes.Any() || groupIdxes.All(a => a.Count == 4);
+    }
+
+	void HandleSubmitPress(int idx)
+    {
+		interactable = false;
+		switch (idx)
+        {
+			default:
+				StartCoroutine(SubmitAnimationC());
+				break;
+        }
+    }
 	void HandleBtnPress(int idx)
     {
 		var rowIdx = idx / colCount;
@@ -101,7 +205,6 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			tileIdxesAll[rowIdx, colIdx] = (tileIdxesAll[rowIdx, colIdx] + 1) % 3;
 			UpdatePuzzle();
 		}
-
     }
 	void GeneratePuzzle()
     {
@@ -163,6 +266,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			for (var dR = 0; dR < curSetPiece.Length && !removeOption; dR++)
 				for (var dC = 0; dC < curSetPiece[dR].Length && !removeOption; dC++)
 				{
+					if (!curSetPiece[dR][dC]) continue;
 					// For each "mino", check for adjacencies of another piece, that is not itself.
 					if (curSetRowIdx + 1 + dR < newBoard.Length && newBoard[dR + curSetRowIdx + 1][dC + curSetColIdx]
 						&& (dR + 1 >= curSetPiece.Length || !curSetPiece[dR + 1][dC]))
@@ -200,10 +304,14 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		QuickLog("One possible solution:");
 		for (var x = 0; x < rowCount; x++)
 			QuickLog(boardColorIdx[x].Select(a => "XKAW"[a]).Join(""));
-        for (var row = 0; row < rowCount; row++)
+		for (var row = 0; row < rowCount; row++)
 			for (var col = 0; col < colCount; col++)
+			{
 				selectedTiles[row, col] = newBoard[row][col];
+				tileIdxesAll[row, col] = 0;
+			}
 		UpdatePuzzle();
+		interactable = true;
 	}
 	void UpdatePuzzle()
     {
@@ -411,4 +519,56 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		}
 		return validPlacements; // Valid placements consist of a piece IDx, and a row,col coordinate.
     }
+#pragma warning disable 414
+	private readonly string TwitchHelpMessage = "Press the following button in the position A4 with \"!{0} A4\". Columns are labeled A-H from left to right, rows are labeled 1-8 from top to bottom. \"press\" is optional. Button presses may be combined in one command. (\"!{0} A1 B2 C3 D4 E5 F6 G7 H8\") Submit the current batch with \"!{0} submit\", \"!{0} submitfast\", or \"!{0} submitinstant\".";
+#pragma warning restore 414
+	readonly string RowIDXScan = "12345678", ColIDXScan = "abcdefgh";
+	IEnumerator ProcessTwitchCommand(string cmd)
+    {
+		var regexSubmit = Regex.Match(cmd, @"^submit(fast|instant)?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+		//var regexSetAll = Regex.Match(cmd, @"^setall\s[KAWX\s]+$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+		if (regexSubmit.Success)
+        {
+			var possibleOnes = new[] { "submit", "submitfast", "submitinstant" };
+			var subVal = regexSubmit.Value.ToLowerInvariant();
+			yield return null;
+			submitButtons[Enumerable.Range(0, 3).FirstOrDefault(a => possibleOnes[a] == subVal)].OnInteract();
+			yield return "solve";
+			yield return "strike";
+			yield break;
+        }
+		/*else if (regexSetAll.Success)
+        {
+			yield break;
+        }*/
+		var intCmd = cmd.ToLowerInvariant().Trim();
+		var allIdxesToPress = new List<int>();
+		if (intCmd.StartsWith("press"))
+			intCmd = intCmd.Replace("press", "").Trim();
+		foreach (string portion in intCmd.Split())
+		{
+			if (!portion.RegexMatch(string.Format(@"^[{1}][{0}]$", RowIDXScan, ColIDXScan)))
+			{
+				yield return string.Format("sendtochaterror The command portion \"{0}\" does not correspond to a valid coordinate!", portion);
+				yield break;
+			}
+			var rowIdx = RowIDXScan.IndexOf(portion[1]);
+			var colIdx = ColIDXScan.IndexOf(portion[0]);
+			if (selectedTiles[rowIdx, colIdx])
+				allIdxesToPress.Add(colCount * rowIdx + colIdx);
+			else
+            {
+				yield return string.Format("sendtochaterror The command portion \"{0}\" does not correspond to a selectable tile!", portion);
+				yield break;
+			}
+		}
+		for (var x = 0; x < allIdxesToPress.Count; x++)
+		{
+			yield return null;
+			gridSelectables[allIdxesToPress[x]].OnInteract();
+			yield return new WaitForSeconds(0.1f);
+		}
+		yield break;
+    }
+
 }

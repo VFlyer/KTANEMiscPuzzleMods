@@ -14,7 +14,7 @@ MonoBehaviour:
   id: VFlyerMiscPuzzlesMod
   title: Flyer's Misc. Puzzles
   author: VFlyer
-  description: 'A collection of 3 puzzle oriented modules developed by VFlyer.
+  description: 'A collection of 4 puzzle oriented modules developed by VFlyer.
 
     [i]If he were to make puzzles in his life, maybe this would be his first idea.[/i]
 
@@ -27,17 +27,20 @@ MonoBehaviour:
 
     Puzzle Pandemonium (Module idea by Deaf)
 
+    Foaboru (Module idea by BigCrunch22)
 
-    Module IDs for each
+
+    Module IDs:
 
     Actual 4x4x4 Sudoku: actual4x4x4SudokuModule
+
+    Foaboru: foaboruModule
 
     Instant Insanity: InstantInsanityModule
 
     Puzzle Pandemonium: PuzzlePandemoniumModule
 
-
 '
-  version: 1.3.1
+  version: 1.4
   outputFolder: build
   previewImage: {fileID: 2800000, guid: ecd37734076f9f14d9a38a9aed5f7f60, type: 3}
