@@ -202,6 +202,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		var colIdx = idx % colCount;
 		if (selectedTiles[rowIdx, colIdx])
 		{
+			mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonRelease, gridSelectables[idx].transform);
 			tileIdxesAll[rowIdx, colIdx] = (tileIdxesAll[rowIdx, colIdx] + 1) % 3;
 			UpdatePuzzle();
 		}
