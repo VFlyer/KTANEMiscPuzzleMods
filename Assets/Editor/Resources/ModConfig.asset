@@ -14,33 +14,13 @@ MonoBehaviour:
   id: VFlyerMiscPuzzlesMod
   title: Flyer's Misc. Puzzles
   author: VFlyer
-  description: 'A collection of 4 puzzle oriented modules developed by VFlyer.
-
-    [i]If he were to make puzzles in his life, maybe this would be his first idea.[/i]
-
-    Modules in this pack:
-
-    Actual 4x4x4 Sudoku (Inspired by Aaron F. Bianchi''s Actual 3D Sudoku, original
-    visuals by SpeakingEvil)
-
-    Instant Insanity (Inspired by a Survivor minigame)
-
-    Puzzle Pandemonium (Module idea by Deaf)
-
-    Foaboru (Module idea by BigCrunch22)
-
-
-    Module IDs:
-
-    Actual 4x4x4 Sudoku: actual4x4x4SudokuModule
-
-    Foaboru: foaboruModule
-
-    Instant Insanity: InstantInsanityModule
-
-    Puzzle Pandemonium: PuzzlePandemoniumModule
-
-'
+  description: "A collection of 4 puzzle oriented modules developed by VFlyer.\n[i]If
+    he were to make puzzles in his life, maybe this would be his first idea.[/i]\nModules
+    in this pack:\nActual 4x4x4 Sudoku (Inspired by Aaron F. Bianchi's Actual 3D Sudoku,
+    original visuals by SpeakingEvil)\nInstant Insanity (Inspired by a Survivor minigame)\nPuzzle
+    Pandemonium (Module idea by Deaf)\nFoaboru (Module idea by BigCrunch22)\n\nContains
+    snippets of \n\nModule IDs:\nActual 4x4x4 Sudoku: actual4x4x4SudokuModule\nFoaboru:
+    foaboruModule\nInstant Insanity: InstantInsanityModule\nPuzzle Pandemonium: PuzzlePandemoniumModule\n"
   version: 1.4.2
   outputFolder: build
   previewImage: {fileID: 2800000, guid: ecd37734076f9f14d9a38a9aed5f7f60, type: 3}

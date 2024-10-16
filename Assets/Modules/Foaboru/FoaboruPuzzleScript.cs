@@ -10,8 +10,9 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 	public MeshRenderer[] gridRenders;
 	public KMBombModule modSelf;
 	public KMAudio mAudio;
+	public AudioClip referTrackLong, referTrackShort;
 	const string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-	const int rowCount = 8, colCount = 8, pieceSize = 4;
+	const int rowCount = 8, colCount = 8;
 
 	bool[][][] possiblePiecePlacements = new string[][] { // A list of all possible pieces and their rotations.
 		// Rows are denoted by the amount of strings in each, columns are denoted by the length of each string.
@@ -45,7 +46,8 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 	// This is all converted by using the symbols denoted for filled and into a series of bool arrays.
 	// In this case, O is filled, - is empty.
 
-	static Color[] colorsRender = new[] { Color.black, Color.grey, Color.white };
+	static Color[] colorsRender = new[] { Color.black, Color.grey, Color.white },
+		solveColorsRender = new[] { new Color(0, 0.25f, 0), new Color(0, 0.5f, 0), new Color(0, 1, 0), Color.white };
 
 	static int modIDCnt;
 	int moduleID;
@@ -55,11 +57,27 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 	static List<KeyValuePair<int, int[]>> allPossiblePlacementsGivenBoard;
 	bool checkAmbiguityOnGen = false, interactable = false, moduleSolved;
 
+	FlyersPuzzleSettings.SubmissionType forcedSubmission = FlyersPuzzleSettings.SubmissionType.NA;
+
+	FlyersPuzzleSettings puzzleSettings;
+
 	void QuickLog(string toLog, params object[] args)
     {
 		Debug.LogFormat("[{0} #{1}] {2}", modSelf.ModuleDisplayName, moduleID, string.Format(toLog, args));
     }
-
+	void Awake()
+    {
+		try
+		{
+			var ModSettings = new ModConfig<FlyersPuzzleSettings>("FlyersMiscPuzzlesSettings");
+			puzzleSettings = ModSettings.Settings;
+			forcedSubmission = puzzleSettings.FoaboruForceSubmissionType;
+		}
+		catch
+        {
+			forcedSubmission = FlyersPuzzleSettings.SubmissionType.NA;
+        }
+    }
 	// Use this for initialization
 	void Start () {
 		// Entire section for generating an example puzzle.
@@ -88,7 +106,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
         {
 			var y = x;
 			gridSelectables[x].OnInteract += delegate {
-				if (interactable)
+				if (interactable && !moduleSolved)
 					HandleBtnPress(y);
 				return false;
 			};
@@ -97,7 +115,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
         {
 			var y = x;
 			submitButtons[x].OnInteract += delegate {
-				if (interactable)
+				if (interactable && !moduleSolved)
 					HandleSubmitPress(y);
 				return false;
 			};
@@ -112,14 +130,18 @@ public class FoaboruPuzzleScript : MonoBehaviour {
             new[] { 27, 28, 35, 36 },
 		};
 		yield return null;
-		mAudio.PlaySoundAtTransform("musCDrop", transform);
+		mAudio.PlaySoundAtTransform(referTrackShort.name, transform);
 		for (var x = 0; x < 4; x++)
-            for (float t = 0; t < 1f; t += Time.deltaTime * 2)
-            {
-				for (var n = 0; n < gridRenders.Length; n++)
-					gridRenders[n].material.color = idxDepthAnim[x].Contains(n) ? Color.Lerp(Color.white, Color.black, t) : Color.black;
+		{
+			for (float t = 0; t < 1f; t += Time.deltaTime * 4 / referTrackShort.length)
+			{
+				foreach (var n in idxDepthAnim[x])
+					gridRenders[n].material.color = Color.Lerp(Color.white, Color.black, t);
 				yield return null;
-            }
+			}
+			foreach (var n in idxDepthAnim[x])
+				gridRenders[n].material.color = Color.black;
+		}
 		QuickLog("Submitted:");
 		for (var row = 0; row < rowCount; row++)
         {
@@ -133,14 +155,24 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			QuickLog("Submission valid.");
 			mAudio.PlaySoundAtTransform("musCEnd", transform);
 			modSelf.HandlePass();
-			for (float t = 0; t < 1f; t += Time.deltaTime / 3)
+			moduleSolved = true;
+			for (float t = 0; t < 1f; t += Time.deltaTime / 4)
 			{
 				for (var n = 0; n < gridRenders.Length; n++)
-					gridRenders[n].material.color = Color.Lerp(Color.green, Color.black, t);
+				{
+					var rowIdx = n / colCount;
+					var colIdx = n % colCount;
+					//Debug.LogFormat("{0}:{1}{2}", n, rowIdx, colIdx);
+					gridRenders[n].material.color = Color.Lerp(Color.green, solveColorsRender[tileIdxesAll[rowIdx, colIdx]], Easing.InOutSine(t, 0, 1f, 1f));
+				}
 				yield return null;
 			}
 			for (var n = 0; n < gridRenders.Length; n++)
-				gridRenders[n].material.color = Color.black;
+			{
+				var rowIdx = n / colCount;
+				var colIdx = n % colCount;
+				gridRenders[n].material.color = solveColorsRender[tileIdxesAll[rowIdx, colIdx]];
+			}
 		}
         else
         {
@@ -189,10 +221,46 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 	void HandleSubmitPress(int idx)
     {
 		interactable = false;
-		switch (idx)
+		mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, submitButtons[idx].transform);
+		var curSubmissionIdx = ((int)forcedSubmission) <= 0 ? idx : ((int)forcedSubmission - 1);
+		switch (curSubmissionIdx)
         {
-			default:
+			case 1:
 				StartCoroutine(SubmitAnimationC());
+				break;
+			case 2:
+			default:
+                {
+					QuickLog("Submitted:");
+					for (var row = 0; row < rowCount; row++)
+					{
+						var strLog = "";
+						for (var col = 0; col < colCount; col++)
+							strLog += selectedTiles[row, col] ? "KAW?"[tileIdxesAll[row, col]] : '-';
+						QuickLog(strLog);
+					}
+					if (SolutionValid())
+                    {
+						interactable = false;
+						QuickLog("Submission valid.");
+						mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
+						modSelf.HandlePass();
+						moduleSolved = true;
+						for (var n = 0; n < gridRenders.Length; n++)
+						{
+							var rowIdx = n / colCount;
+							var colIdx = n % colCount;
+							gridRenders[n].material.color = solveColorsRender[tileIdxesAll[rowIdx, colIdx]];
+						}
+						return;
+					}
+					else
+					{
+						QuickLog("Invalid submission. Resetting...");
+						modSelf.HandleStrike();
+						GeneratePuzzle();
+					}
+				}
 				break;
         }
     }
@@ -399,17 +467,20 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		return newGrid;
     }
 
-	List<KeyValuePair<int, int[]>>[] PieceConfigsPerGroup(IEnumerable<IEnumerable<int>> knownGroupIdxes, List<KeyValuePair<int, int[]>> determinedPlacements)
+	List<int[]> PieceIdxesPerGroup(List<KeyValuePair<int, int[]>> determinedPlacements, int colCount)
     {
-		var output = new List<KeyValuePair<int, int[]>>[knownGroupIdxes.Count()];
-		for (var x = 0; x < knownGroupIdxes.Count(); x++)
+		var output = new List<int[]>();
+		for (var n = 0; n < determinedPlacements.Count(); n++)
         {
-			var curGroup = knownGroupIdxes.ElementAt(x);
-			var piecesAllowed = new List<KeyValuePair<int, int[]>>();
-			foreach (var placement in determinedPlacements)
-				if (curGroup.All(a => placement.Value.Contains(a)))
-					piecesAllowed.Add(placement);
-			output[x] = piecesAllowed;
+			var curGroup = determinedPlacements[n];
+			var resultCurGroup = new List<int>();
+			var curPieceConfig = possiblePiecePlacements[curGroup.Key];
+			var curPieceCoordTL = curGroup.Value; // [row,col]
+            for (var row = 0; row < curPieceConfig.Length; row++)
+				for (var col = 0; col < curPieceConfig[row].Length; col++)
+					if (curPieceConfig[row][col])
+						resultCurGroup.Add((row + curPieceCoordTL[0]) * colCount + col + curPieceCoordTL[1]);
+			output.Add(resultCurGroup.ToArray());
 		}
 		return output;
     }
@@ -424,6 +495,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		var boardWidth = _2Dboard.Length;
 		var boardLength = boardWidth == 0 ? 0 : _2Dboard[0].Length;
 		var knownGroupIdxes = new List<List<int>>();
+		var pieceOptionsPerGroup = PieceIdxesPerGroup(allPossiblePlacements, boardWidth);
 		for (var x = 0; x < boardWidth; x++)
 			for (var y = 0; y < boardLength; y++)
 				if (_2Dboard[x][y])
@@ -443,15 +515,16 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		var idxesFilled = Enumerable.Range(0, boardLength * boardWidth).Where(x => altered2DBoard[x / boardLength][x % boardLength]).ToList();
 		do
 		{
-			var lastKnownGroupIdxes = knownGroupIdxes.Select(a => a.ToArray()).ToArray();
-			var pieceOptionsPerGroup = PieceConfigsPerGroup(lastKnownGroupIdxes, allPossiblePlacements);
+			var lastKnownIdxesGroups = idxesGroupedPlacement.ToArray();
 			var lastAdjacentPairs = adjacentPairs.ToList();
+			foreach (var pair in lastAdjacentPairs) // pair are the two idxes provided.
+            {
 
-
-			collapsable |= lastKnownGroupIdxes.Length != knownGroupIdxes.Count;
+            }
+			collapsable |= lastKnownIdxesGroups.Length != idxesGroupedPlacement.Count;
 		}
 		while (collapsable);
-		return allPossiblePlacements;
+		return idxesGroupedPlacement.Select(a => allPossiblePlacements[a]).ToList();
     }
 
 	int CountSolutions(bool[][] _2Dboard, List<KeyValuePair<int, int[]>> determinedPlacements = null)
