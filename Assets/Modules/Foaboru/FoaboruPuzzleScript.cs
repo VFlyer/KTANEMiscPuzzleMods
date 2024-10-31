@@ -607,14 +607,14 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 					pairRemovable = true;
 				}
 				else if (!groupIdxesOnlyIn1st.Any() && groupIdxesOnlyIn2nd.Any())
-				{
+				{ // If there are no groups in the first but there are groups in the second, remove all options for the group in only the 2nd idx, and connect that pair.
 					knownGroup2nd.AddRange(knownGroup1st);
 					knownGroupIdxes.Remove(knownGroup1st);
 					idxesGroupedPlacement.RemoveAll(a => groupIdxesOnlyIn2nd.Contains(a));
 					pairRemovable = true;
 				}
 				else if (!groupIdxesOnlyIn2nd.Any() && groupIdxesOnlyIn1st.Any())
-				{
+				{ // If there are no groups in the first but there are groups in the first, remove all options for the group in only the 1st idx, and connect that pair.
 					knownGroup1st.AddRange(knownGroup2nd);
 					knownGroupIdxes.Remove(knownGroup2nd);
 					idxesGroupedPlacement.RemoveAll(a => groupIdxesOnlyIn1st.Contains(a));
