@@ -72,10 +72,12 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			var ModSettings = new ModConfig<FlyersPuzzleSettings>("FlyersMiscPuzzlesSettings");
 			puzzleSettings = ModSettings.Settings;
 			forcedSubmission = puzzleSettings.FoaboruForceSubmissionType;
+			checkAmbiguityOnGen = puzzleSettings.FoaboruEnsureUniqueSolution;
 		}
 		catch
         {
 			forcedSubmission = FlyersPuzzleSettings.SubmissionType.NA;
+			checkAmbiguityOnGen = true;
         }
     }
 	// Use this for initialization
@@ -119,6 +121,72 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 					HandleSubmitPress(y);
 				return false;
 			};
+        }
+	}
+	IEnumerator SubmitAnimationDusk()
+    {
+		QuickLog("Submitted:");
+		for (var row = 0; row < rowCount; row++)
+		{
+			var strLog = "";
+			for (var col = 0; col < colCount; col++)
+				strLog += selectedTiles[row, col] ? "KAW?"[tileIdxesAll[row, col]] : '-';
+			QuickLog(strLog);
+		}
+		yield return null;
+		mAudio.PlaySoundAtTransform(referTrackLong.name, transform);
+		var timeThresholds = new float[] {
+			0.5f, 1f, 1.5f, 2f, 2.5f, 3f, 3.5f, 4f,
+			4.33f, 4.67f, 5f, 5.33f, 5.67f, 6f, 6.33f, 6.67f, 7f, 7.33f, 7.66f, 8f,
+            8.2f, 8.4f, 8.6f, 8.8f, 9f, 9.2f, 9.4f, 9.6f, 9.8f, 10f,
+			10.2f, 10.4f, 10.6f, 10.8f, 11f,
+			11.1f, 11.2f, 11.3f, 11.4f, 11.5f, 11.6f, 11.7f, 11.8f, 11.9f, 12f,
+            12.1f, 12.2f, 12.3f, 12.4f, 12.5f, 12.6f, 12.7f, 12.8f, 12.9f, 13f,
+			13.2f,13.4f,13.6f,13.8f, 14f, 14.2f,
+			};
+		var pickedIdxes = Enumerable.Range(0, 3).ToArray().Shuffle();
+        for (float t = 0; t < referTrackLong.length; t += Time.deltaTime)
+		{
+			for (var n = 0; n < gridRenders.Length; n++)
+			{
+				if (!selectedTiles[n / colCount, n % colCount]) continue;
+				var idxColor = tileIdxesAll[n / colCount, n % colCount];
+				var curT = t;
+                var curMaxIter = Enumerable.Range(1, timeThresholds.Length).Where(a => timeThresholds[a - 1] <= curT).LastOrDefault();
+				gridRenders[n].material.color = t >= 14.4f ? colorsRender[0] : colorsRender[(pickedIdxes[idxColor] + curMaxIter) % colorsRender.Length];
+			}
+			yield return null;
+		}
+		if (SolutionValid())
+		{
+			QuickLog("Submission valid.");
+			mAudio.PlaySoundAtTransform("Dusk (Drop)", transform);
+			modSelf.HandlePass();
+			moduleSolved = true;
+			for (var p = 0; p < 38; p++)
+			{
+				for (var n = 0; n < gridRenders.Length; n++)
+				{
+					var rowIdx = n / colCount;
+					var colIdx = n % colCount;
+					if (!selectedTiles[rowIdx, colIdx]) continue;
+					gridRenders[n].material.color = solveColorsRender[(p + pickedIdxes[tileIdxesAll[rowIdx, colIdx]]) % 3];
+				}
+				yield return new WaitForSeconds(0.4f);
+			}
+			for (var n = 0; n < gridRenders.Length; n++)
+			{
+				var rowIdx = n / colCount;
+				var colIdx = n % colCount;
+				if (!selectedTiles[rowIdx, colIdx]) continue;
+				gridRenders[n].material.color = solveColorsRender[tileIdxesAll[rowIdx, colIdx]];
+			}
+		}
+        else
+        {
+			QuickLog("Invalid submission. Resetting...");
+			modSelf.HandleStrike();
+			GeneratePuzzle();
         }
 	}
 	IEnumerator SubmitAnimationC()
@@ -225,6 +293,9 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		var curSubmissionIdx = ((int)forcedSubmission) <= 0 ? idx : ((int)forcedSubmission - 1);
 		switch (curSubmissionIdx)
         {
+			case 0:
+				StartCoroutine(SubmitAnimationDusk());
+				break;
 			case 1:
 				StartCoroutine(SubmitAnimationC());
 				break;
@@ -388,7 +459,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
         {
 			var rowIdx = x / colCount;
 			var colIdx = x % colCount;
-			gridRenders[x].enabled = selectedTiles[rowIdx, colIdx];
+			gridRenders[x].gameObject.SetActive(selectedTiles[rowIdx, colIdx]);
 			gridRenders[x].material.color = colorsRender[tileIdxesAll[rowIdx, colIdx]];
 		}
     }
@@ -469,6 +540,9 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 
 	List<int[]> PieceIdxesPerGroup(List<KeyValuePair<int, int[]>> determinedPlacements, int colCount)
     {
+		/*
+		 * Use the board length and a list of determined placements to determine where it should go.
+		 */
 		var output = new List<int[]>();
 		for (var n = 0; n < determinedPlacements.Count(); n++)
         {
@@ -492,38 +566,80 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		var allPossiblePlacements = determinedPlacements ?? GetAllPossiblePlacements(_2Dboard);
 		var idxesGroupedPlacement = Enumerable.Range(0, allPossiblePlacements.Count).ToList();
 		var altered2DBoard = _2Dboard.Select(a => a.ToArray()).ToArray();
-		var boardWidth = _2Dboard.Length;
-		var boardLength = boardWidth == 0 ? 0 : _2Dboard[0].Length;
+		var boardHeight = _2Dboard.Length; // How tall the board is.
+		var boardLength = boardHeight == 0 ? 0 : _2Dboard[0].Length;
 		var knownGroupIdxes = new List<List<int>>();
-		var pieceOptionsPerGroup = PieceIdxesPerGroup(allPossiblePlacements, boardWidth);
-		for (var x = 0; x < boardWidth; x++)
+		var pieceOptionsPerGroup = PieceIdxesPerGroup(allPossiblePlacements, boardLength);
+		// Treat individual pieces as known groups.
+		for (var x = 0; x < boardHeight; x++)
 			for (var y = 0; y < boardLength; y++)
 				if (_2Dboard[x][y])
 					knownGroupIdxes.Add(new List<int>() { x * boardLength + y });
 		// Create a set of adjacent pairs on the grid, that connects another piece.
 		var adjacentPairs = new List<int[]>();
-        for (var x = 0; x < boardLength * boardWidth; x++)
+        for (var x = 0; x < boardLength * boardHeight; x++)
         {
 			if (!altered2DBoard[x / boardLength][x % boardLength]) continue;
 
 			if (x % boardLength + 1 < boardLength && altered2DBoard[x / boardLength][x % boardLength + 1])
 				adjacentPairs.Add(new[] { x, x + 1 });
-			if (x / boardLength + 1 < boardWidth && altered2DBoard[x / boardLength + 1][x % boardLength])
+			if (x / boardLength + 1 < boardHeight && altered2DBoard[x / boardLength + 1][x % boardLength])
 				adjacentPairs.Add(new[] { x, x + boardLength });
 		}
 		var collapsable = false;
-		var idxesFilled = Enumerable.Range(0, boardLength * boardWidth).Where(x => altered2DBoard[x / boardLength][x % boardLength]).ToList();
 		do
 		{
 			var lastKnownIdxesGroups = idxesGroupedPlacement.ToArray();
 			var lastAdjacentPairs = adjacentPairs.ToList();
-			foreach (var pair in lastAdjacentPairs) // pair are the two idxes provided.
+			foreach (var pair in lastAdjacentPairs)
+			{ // pair are the two idxes provided.
+				var pairRemovable = false;
+				var _1stIdxInPair = pair[0];
+				var _2ndIdxInPair = pair[1];
+				var knownGroup1st = knownGroupIdxes.Single(a => a.Contains(_1stIdxInPair));
+				var knownGroup2nd = knownGroupIdxes.Single(a => a.Contains(_2ndIdxInPair));
+				var groupIdxesOnlyIn1st = lastKnownIdxesGroups.Where(a => pieceOptionsPerGroup[a].Contains(_1stIdxInPair) && !pieceOptionsPerGroup[a].Contains(_2ndIdxInPair));
+				var groupIdxesOnlyIn2nd = lastKnownIdxesGroups.Where(a => !pieceOptionsPerGroup[a].Contains(_1stIdxInPair) && pieceOptionsPerGroup[a].Contains(_2ndIdxInPair));
+				var groupIdxesInBoth = lastKnownIdxesGroups.Where(a => pieceOptionsPerGroup[a].Contains(_1stIdxInPair) && pieceOptionsPerGroup[a].Contains(_2ndIdxInPair));
+				if (knownGroup1st == knownGroup2nd || knownGroup1st.Count >= 4 || knownGroup2nd.Count >= 4)
+				{// If either of the pair belongs to a group of 4 or more, or the known groups of the pair are the same, remove it.
+					idxesGroupedPlacement.RemoveAll(a => groupIdxesInBoth.Contains(a));
+					pairRemovable = true;
+				}
+				else if (!groupIdxesOnlyIn1st.Any() && groupIdxesOnlyIn2nd.Any())
+				{
+					knownGroup2nd.AddRange(knownGroup1st);
+					knownGroupIdxes.Remove(knownGroup1st);
+					idxesGroupedPlacement.RemoveAll(a => groupIdxesOnlyIn2nd.Contains(a));
+					pairRemovable = true;
+				}
+				else if (!groupIdxesOnlyIn2nd.Any() && groupIdxesOnlyIn1st.Any())
+				{
+					knownGroup1st.AddRange(knownGroup2nd);
+					knownGroupIdxes.Remove(knownGroup2nd);
+					idxesGroupedPlacement.RemoveAll(a => groupIdxesOnlyIn1st.Contains(a));
+					pairRemovable = true;
+				}
+				if (pairRemovable)
+					adjacentPairs.Remove(pair);
+			}
+			/*
+			// For each possible configuration, check if there are any invalid groups. Invalid groups consist of connecting groups such that the amount of minos exceed 4.
+			foreach (var pieceIdx in lastKnownIdxesGroups)
             {
-
-            }
+				var curPieceOption = pieceOptionsPerGroup[pieceIdx];
+				var theoreticalGroup = new List<int>();
+				foreach (var minoIdx in curPieceOption)
+                {
+					var groupFromMinoIdx = knownGroupIdxes.SingleOrDefault(a => a.Contains(minoIdx));
+					theoreticalGroup.AddRange(groupFromMinoIdx);
+                }
+				if (theoreticalGroup.Count > 4)
+					idxesGroupedPlacement.Remove(pieceIdx);
+            }*/
 			collapsable |= lastKnownIdxesGroups.Length != idxesGroupedPlacement.Count;
 		}
-		while (collapsable);
+		while (collapsable && adjacentPairs.Any());
 		return idxesGroupedPlacement.Select(a => allPossiblePlacements[a]).ToList();
     }
 
@@ -532,7 +648,21 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		var allPossiblePlacements = determinedPlacements ?? GetAllPossiblePlacements(_2Dboard);
 		// "Human Deduction" section
 		allPossiblePlacements = CollapseCombinations(_2Dboard, allPossiblePlacements);
-		if (_2Dboard.Sum(a => a.Count(b => b)) / 4 == allPossiblePlacements.Count)
+		var new2DBoardAfterPlacement = _2Dboard.Select(a => a.ToArray()).ToArray();
+		var coarseSolved = true;
+        for (var x = 0; x < allPossiblePlacements.Count && coarseSolved; x++)
+        {
+			var curPlacement = allPossiblePlacements[x];
+			var rCFromPlacement = curPlacement.Value;
+			var patternFromPlacement = possiblePiecePlacements[curPlacement.Key];
+			if (DoesPatternFitBoard(new2DBoardAfterPlacement, patternFromPlacement, rCFromPlacement[0], rCFromPlacement[1]))
+				for (var r = 0; r < patternFromPlacement.Length; r++)
+					for (var c = 0; c < patternFromPlacement[0].Length; c++)
+						new2DBoardAfterPlacement[rCFromPlacement[0] + r][rCFromPlacement[1] + c] ^= patternFromPlacement[r][c];
+			else
+				coarseSolved = false;
+		}
+		if (coarseSolved)
 			return 1;
 		// Brute force section
 		var countedSolutions = 0;
@@ -594,13 +724,13 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		return validPlacements; // Valid placements consist of a piece IDx, and a row,col coordinate.
     }
 #pragma warning disable 414
-	private readonly string TwitchHelpMessage = "Press the following button in the position A4 with \"!{0} A4\". Columns are labeled A-H from left to right, rows are labeled 1-8 from top to bottom. \"press\" is optional. Button presses may be combined in one command. (\"!{0} A1 B2 C3 D4 E5 F6 G7 H8\") Submit the current batch with \"!{0} submit\", \"!{0} submitfast\", or \"!{0} submitinstant\".";
+	private readonly string TwitchHelpMessage = "Press the following button in the position A4 with \"!{0} A4\". Columns are labeled A-H from left to right, rows are labeled 1-8 from top to bottom. \"press\" is optional. Button presses may be combined in one command. (\"!{0} A1 B2 C3 D4 E5 F6 G7 H8\") Set the entire grid in reading order with \"!{0} setall WAK-WAK-WAK-\". (Dependent on board size) Submit the current batch with \"!{0} submit\", \"!{0} submitfast\", or \"!{0} submitinstant\".";
 #pragma warning restore 414
 	readonly string RowIDXScan = "12345678", ColIDXScan = "abcdefgh";
 	IEnumerator ProcessTwitchCommand(string cmd)
     {
 		var regexSubmit = Regex.Match(cmd, @"^submit(fast|instant)?$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
-		//var regexSetAll = Regex.Match(cmd, @"^setall\s[KAWX\s]+$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+		var regexSetAll = Regex.Match(cmd, @"^setall\s[KAW\-\s]+$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 		if (regexSubmit.Success)
         {
 			var possibleOnes = new[] { "submit", "submitfast", "submitinstant" };
@@ -611,10 +741,17 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			yield return "strike";
 			yield break;
         }
-		/*else if (regexSetAll.Success)
+		else if (regexSetAll.Success)
         {
+
+
+			for (var x = 0; x < gridSelectables.Length; x++)
+            {
+
+            }
+
 			yield break;
-        }*/
+        }
 		var intCmd = cmd.ToLowerInvariant().Trim();
 		var allIdxesToPress = new List<int>();
 		if (intCmd.StartsWith("press"))
