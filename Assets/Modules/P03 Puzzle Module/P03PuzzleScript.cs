@@ -25,7 +25,9 @@ public class P03PuzzleScript : MonoBehaviour {
 
 	public KMAudio mAudio;
 	public KMBombModule modSelf;
-	public KMSelectable[] gridsSelectable, componentSelectables;
+	public KMSelectable[] componentSelectables;
+	public P03PuzzleCell[] puzzleCells;
+	public TextMesh[] resultTexts, componentTexts;
 	public KMSelectable submitBtn, resetBtn;
 
 	int[][] initialPowersEach;
@@ -35,7 +37,7 @@ public class P03PuzzleScript : MonoBehaviour {
 	static int modIDCnt;
 	int moduleID;
 	int length = 6, boards = 2; // Length is how long the board is, board is how many sets will need to be met to disarm the module.
-
+	bool submitting = false, interactable = false;
 	void QuickLog(string toLog, params object[] args)
     {
 		Debug.LogFormat("[{0} #{1}] {2}", modSelf.ModuleDisplayName, moduleID, string.Format(toLog, args));
@@ -53,18 +55,106 @@ public class P03PuzzleScript : MonoBehaviour {
 		expectedPowers = new int[boards];
 		for (var x = 0; x < boards; x++)
 			initialPowersEach[x] = new int[length];
-		retryGen:
+		//retryGen:
 		for (var x = 0; x < boards; x++)
 			componentsPlaced[x] = new ComponentType[length];
-		amountComponents = new int[4]; // Consists of Neg, Zero, Pos, and Null, in that order.
+		initialAmountComponents = new int[4]; // Consists of Zero, Pos, Neg, and Null, in that order.
+		var allowedComponents = new[] { ComponentType.Zero, ComponentType.Pos, ComponentType.Neg, ComponentType.Breaker,  };
 		for (var x = 0; x < boards; x++)
 			for (var y = 0; y < length; y++)
 				initialPowersEach[x][y] = Random.Range(-2, 5); // Setup the initial powers for each type.
 		var solutionComponentsPlaced = componentsPlaced.Select(a => a.ToArray()).ToArray();
+        for (var row = 0; row < boards; row++)
+        {
+			var cntCompsToPlace = Random.Range(2, 5);
+			var idxFocusPos = Enumerable.Range(0, length).ToArray().Shuffle().Take(cntCompsToPlace).ToArray();
+			foreach (var idxSelected in idxFocusPos)
+			{
+				var pickedComponent = allowedComponents.PickRandom();
+				solutionComponentsPlaced[row][idxSelected] = pickedComponent;
+				initialAmountComponents[(int)pickedComponent - 1]++;
+			}
+        }
+		amountComponents = initialAmountComponents.ToArray();
+		expectedPowers = Enumerable.Range(0, boards).Select(a => CalculatePowerFromSpecificBoard(solutionComponentsPlaced[a], initialPowersEach[a])).ToArray();
+		QuickLog("One possible solution:");
+		for (var x = 0; x < boards; x++)
+			QuickLog("Board {0}: Goal = {2}; Layout = [ {1} ]", x + 1, Enumerable.Range(0, length).Select(a => solutionComponentsPlaced[x][a] == ComponentType.Empty ? initialPowersEach[x][a].ToString() : solutionComponentsPlaced[x][a].ToString()).Join(", "), expectedPowers[x]);
+		QuickLog("Initial State:");
+		for (var x = 0; x < boards; x++)
+			QuickLog("Board {0}: [ {1} ]", x + 1, initialPowersEach[x].Join(", "));
+        QuickLog("Amount of each components: {0}", Enumerable.Range(0, allowedComponents.Length).Select(a => string.Format("[{0} = {1}]", allowedComponents[a].ToString(), initialAmountComponents[a])).Join());
+		interactable = true;
+		UpdateBoard();
 	}
-
-
-	int CalculatePowerFromSpecificBoard(ComponentType[] placedComps, int[] powers)
+	void UpdateBoard()
+    {
+		for (var x = 0; x < puzzleCells.Length; x++)
+        {
+			var cellIdx = x % length;
+			var boardIdx = x / length;
+			puzzleCells[x].displayMesh.text = componentsPlaced[boardIdx][cellIdx] != ComponentType.Empty ? "" : initialPowersEach[boardIdx][cellIdx].ToString();
+        }
+        for (var x = 0; x < resultTexts.Length; x++)
+			resultTexts[x].text = string.Format("??\n---\n{0}", expectedPowers[x].ToString("00"));
+    }
+	void HandleReset()
+    {
+		if (submitting)
+        {
+			submitting = false;
+        }
+		else
+        {
+			for (var x = 0; x < componentsPlaced.Length; x++)
+				for (var y = 0; y < componentsPlaced[x].Length; y++)
+					componentsPlaced[x][y] = ComponentType.Empty;
+			amountComponents = initialAmountComponents.ToArray();
+        }
+		UpdateBoard();
+	}
+	void HandleSubmit()
+    {
+		if (!submitting)
+        {
+			submitting = true;
+			interactable = false;
+			StartCoroutine(HandleSubmitAnim());
+        }
+	}
+	IEnumerator HandleSubmitAnim()
+    {
+		var duplicatedBoardValues = initialPowersEach.Select(a => a.ToArray()).ToArray();
+		for (var boardIdx = 0; boardIdx < boards; boardIdx++)
+		{
+			var placedComps = componentsPlaced[boardIdx];
+			var idxComponentsPlaced = Enumerable.Range(0, length).Where(a => placedComps[a] != ComponentType.Empty).ToArray();
+			var idxBreakerComp = idxComponentsPlaced.Where(a => placedComps[a] == ComponentType.Breaker).ToArray();
+			var idxModifierComp = idxComponentsPlaced.Where(a => placedComps[a] != ComponentType.Breaker).ToArray();
+			for (var i = 0; i < idxModifierComp.Length; i++)
+				for (var j = i + 1; j < idxModifierComp.Length; j++)
+				{
+					var rangeItems = Enumerable.Range(idxModifierComp[i], idxModifierComp[j] + 1 - idxModifierComp[i]);
+					if (!rangeItems.Any(a => idxBreakerComp.Contains(a))) // Check if the item in between is a breaker, including the last and first items.
+					{
+						var powerOffsetObtained = (placedComps[i] == ComponentType.Pos ? 1 : placedComps[i] == ComponentType.Neg ? -1 : 0) + (placedComps[j] == ComponentType.Pos ? 1 : placedComps[j] == ComponentType.Neg ? -1 : 0);
+						foreach (var item in rangeItems.Take(rangeItems.Count() - 1).Skip(1))
+							duplicatedBoardValues[boardIdx][item] += powerOffsetObtained;
+					}
+				}
+		}
+		if (CalculatePowerFromAllBoards().SequenceEqual(expectedPowers))
+        {
+			modSelf.HandlePass();
+        }
+		else
+        {
+			interactable = true;
+			modSelf.HandleStrike();
+		}
+		yield break;
+    }
+	int CalculatePowerFromSpecificBoard(ComponentType[] placedComps, IEnumerable<int> powers)
     {
 		var idxComponentsPlaced = Enumerable.Range(0, length).Where(a => placedComps[a] != ComponentType.Empty).ToArray();
 		var idxBreakerComp = idxComponentsPlaced.Where(a => placedComps[a] == ComponentType.Breaker).ToArray();
@@ -76,7 +166,7 @@ public class P03PuzzleScript : MonoBehaviour {
 				var rangeItems = Enumerable.Range(idxModifierComp[i], idxModifierComp[j] + 1 - idxModifierComp[i]);
 				if (!rangeItems.Any(a => idxBreakerComp.Contains(a))) // Check if the item in between is a breaker, including the last and first items.
 				{
-					var powerOffsetObtained = offsetModifs.Single(a => a.Value.Any(b => b.SequenceEqual(new[] { placedComps[i], placedComps[j] }) || b.SequenceEqual(new[] { placedComps[j], placedComps[i] }))).Key;
+					var powerOffsetObtained = (placedComps[i] == ComponentType.Pos ? 1 : placedComps[i] == ComponentType.Neg ? -1 : 0) + (placedComps[j] == ComponentType.Pos ? 1 : placedComps[j] == ComponentType.Neg ? -1 : 0);
 					foreach (var item in rangeItems.Take(rangeItems.Count() - 1).Skip(1))
 						finalPowersEach[item] += powerOffsetObtained;
 				}

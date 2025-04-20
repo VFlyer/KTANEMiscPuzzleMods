@@ -7,7 +7,8 @@ using System.Text.RegularExpressions;
 
 public class FoaboruPuzzleScript : MonoBehaviour {
 	public KMSelectable[] gridSelectables, submitButtons;
-	public MeshRenderer[] gridRenders;
+	public MeshRenderer[] gridRenders, submitRenderers;
+	public TextMesh[] submitButtonTexts;
 	public KMBombModule modSelf;
 	public KMAudio mAudio;
 	public AudioClip referTrackLong, referTrackShort;
@@ -60,6 +61,8 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 	FlyersPuzzleSettings.SubmissionType forcedSubmission = FlyersPuzzleSettings.SubmissionType.NA;
 
 	FlyersPuzzleSettings puzzleSettings;
+
+	List<int> boardSelectIdxes = new List<int>();
 
 	void QuickLog(string toLog, params object[] args)
     {
@@ -123,6 +126,15 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			};
         }
 	}
+
+	void ColorSubmitButtonsGreen()
+    {
+		for (var x = 0; x < submitRenderers.Length; x++)
+			submitRenderers[x].material.color = solveColorsRender[x];
+		for (var x = 0; x < submitButtonTexts.Length; x++)
+			submitButtonTexts[x].color = solveColorsRender[x == 0 ? 2 : 0];
+    }
+
 	IEnumerator SubmitAnimationDusk()
     {
 		QuickLog("Submitted:");
@@ -147,10 +159,11 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		var pickedIdxes = Enumerable.Range(0, 3).ToArray().Shuffle();
         for (float t = 0; t < referTrackLong.length; t += Time.deltaTime)
 		{
-			for (var n = 0; n < gridRenders.Length; n++)
+			for (var n = 0; n < boardSelectIdxes.Count; n++)
 			{
-				if (!selectedTiles[n / colCount, n % colCount]) continue;
-				var idxColor = tileIdxesAll[n / colCount, n % colCount];
+				var idxOfItem = boardSelectIdxes[n];
+				if (!selectedTiles[idxOfItem / colCount, idxOfItem % colCount]) continue;
+				var idxColor = tileIdxesAll[idxOfItem / colCount, idxOfItem % colCount];
 				var curT = t;
                 var curMaxIter = Enumerable.Range(1, timeThresholds.Length).Where(a => timeThresholds[a - 1] <= curT).LastOrDefault();
 				gridRenders[n].material.color = t >= 14.4f ? colorsRender[0] : colorsRender[(pickedIdxes[idxColor] + curMaxIter) % colorsRender.Length];
@@ -161,24 +174,27 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		{
 			QuickLog("Submission valid.");
 			mAudio.PlaySoundAtTransform("Dusk (Drop)", transform);
+			ColorSubmitButtonsGreen();
 			modSelf.HandlePass();
 			moduleSolved = true;
 			for (var p = 0; p < 38; p++)
 			{
-				for (var n = 0; n < gridRenders.Length; n++)
+				for (var n = 0; n < boardSelectIdxes.Count; n++)
 				{
-					var rowIdx = n / colCount;
-					var colIdx = n % colCount;
-					if (!selectedTiles[rowIdx, colIdx]) continue;
+					var idxOfItem = boardSelectIdxes[n];
+					var rowIdx = idxOfItem / colCount;
+					var colIdx = idxOfItem % colCount;
+					//if (!selectedTiles[rowIdx, colIdx]) continue;
 					gridRenders[n].material.color = solveColorsRender[(p + pickedIdxes[tileIdxesAll[rowIdx, colIdx]]) % 3];
 				}
 				yield return new WaitForSeconds(0.4f);
 			}
-			for (var n = 0; n < gridRenders.Length; n++)
+			for (var n = 0; n < boardSelectIdxes.Count; n++)
 			{
-				var rowIdx = n / colCount;
-				var colIdx = n % colCount;
-				if (!selectedTiles[rowIdx, colIdx]) continue;
+				var idxOfItem = boardSelectIdxes[n];
+				var rowIdx = idxOfItem / colCount;
+				var colIdx = idxOfItem % colCount;
+				//if (!selectedTiles[rowIdx, colIdx]) continue;
 				gridRenders[n].material.color = solveColorsRender[tileIdxesAll[rowIdx, colIdx]];
 			}
 		}
@@ -222,23 +238,26 @@ public class FoaboruPuzzleScript : MonoBehaviour {
         {
 			QuickLog("Submission valid.");
 			mAudio.PlaySoundAtTransform("musCEnd", transform);
+			ColorSubmitButtonsGreen();
 			modSelf.HandlePass();
 			moduleSolved = true;
 			for (float t = 0; t < 1f; t += Time.deltaTime / 4)
 			{
-				for (var n = 0; n < gridRenders.Length; n++)
+				for (var n = 0; n < boardSelectIdxes.Count; n++)
 				{
-					var rowIdx = n / colCount;
-					var colIdx = n % colCount;
+					var idxOfItem = boardSelectIdxes[n];
+					var rowIdx = idxOfItem / colCount;
+					var colIdx = idxOfItem % colCount;
 					//Debug.LogFormat("{0}:{1}{2}", n, rowIdx, colIdx);
 					gridRenders[n].material.color = Color.Lerp(Color.green, solveColorsRender[tileIdxesAll[rowIdx, colIdx]], Easing.InOutSine(t, 0, 1f, 1f));
 				}
 				yield return null;
 			}
-			for (var n = 0; n < gridRenders.Length; n++)
+			for (var n = 0; n < boardSelectIdxes.Count; n++)
 			{
-				var rowIdx = n / colCount;
-				var colIdx = n % colCount;
+				var idxOfItem = boardSelectIdxes[n];
+				var rowIdx = idxOfItem / colCount;
+				var colIdx = idxOfItem % colCount;
 				gridRenders[n].material.color = solveColorsRender[tileIdxesAll[rowIdx, colIdx]];
 			}
 		}
@@ -289,6 +308,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 	void HandleSubmitPress(int idx)
     {
 		interactable = false;
+		submitButtons[idx].AddInteractionPunch(0.5f);
 		mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonPress, submitButtons[idx].transform);
 		var curSubmissionIdx = ((int)forcedSubmission) <= 0 ? idx : ((int)forcedSubmission - 1);
 		switch (curSubmissionIdx)
@@ -312,15 +332,17 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 					}
 					if (SolutionValid())
                     {
-						interactable = false;
+						//interactable = false;
+						ColorSubmitButtonsGreen();
 						QuickLog("Submission valid.");
 						mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
 						modSelf.HandlePass();
 						moduleSolved = true;
-						for (var n = 0; n < gridRenders.Length; n++)
+						for (var n = 0; n < boardSelectIdxes.Count; n++)
 						{
-							var rowIdx = n / colCount;
-							var colIdx = n % colCount;
+							var idxOfItem = boardSelectIdxes[n];
+							var rowIdx = idxOfItem / colCount;
+							var colIdx = idxOfItem % colCount;
 							gridRenders[n].material.color = solveColorsRender[tileIdxesAll[rowIdx, colIdx]];
 						}
 						return;
@@ -337,8 +359,10 @@ public class FoaboruPuzzleScript : MonoBehaviour {
     }
 	void HandleBtnPress(int idx)
     {
-		var rowIdx = idx / colCount;
-		var colIdx = idx % colCount;
+		if (idx >= boardSelectIdxes.Count) return;
+		var selectedGridIdx = boardSelectIdxes[idx];
+		var rowIdx = selectedGridIdx / colCount;
+		var colIdx = selectedGridIdx % colCount;
 		if (selectedTiles[rowIdx, colIdx])
 		{
 			mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.ButtonRelease, gridSelectables[idx].transform);
@@ -348,13 +372,15 @@ public class FoaboruPuzzleScript : MonoBehaviour {
     }
 	void GeneratePuzzle()
     {
+		retryGen:
 		var newBoard = new bool[rowCount][];
 		for (var x = 0; x < rowCount; x++)
 			newBoard[x] = new bool[colCount];
 		var boardColorIdx = new int[rowCount][];
 		for (var x = 0; x < rowCount; x++)
 			boardColorIdx[x] = new int[colCount];
-		allPossiblePlacementsGivenBoard = GetAllPossiblePlacements(newBoard, true);
+		if (allPossiblePlacementsGivenBoard == null)
+			allPossiblePlacementsGivenBoard = GetAllPossiblePlacements(newBoard, true);
 		//Debug.LogFormat(allPossiblePlacementsGivenBoard.Select(a => string.Format("[{0}: {1}]", possiblePiecePlacements[a.Key].Select(b => b.Select(c => c ? "o" : "-").Join("")).Join(";"), string.Format("{0}{1}", alphabet[a.Value.Last()], a.Value.First() + 1))).Join(";"));
 		var idxesShuffled = Enumerable.Range(0, allPossiblePlacementsGivenBoard.Count).ToList();
 		var firstPlacementIdx = idxesShuffled.PickRandom();
@@ -400,6 +426,8 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 				idxesShuffled.Remove(nextIdx);
 				continue;
 			}
+			/*
+			 * Ommited since procedure can be done outside, rather than inside.
 			// Final check:
 			// The piece must be adjacent to another piece on the board, connected to at most 2 colors.
 			var distinctColors = new List<int>();
@@ -437,6 +465,55 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 							boardColorIdx[curSetRowIdx + deltaR][curSetColIdx + deltaC] = firstColorNotUsed;
 						}
 			}
+			*/
+			for (var deltaR = 0; deltaR < curSetPiece.Length; deltaR++)
+				for (var deltaC = 0; deltaC < curSetPiece[deltaR].Length; deltaC++)
+					if (curSetPiece[deltaR][deltaC])
+						newBoard[curSetRowIdx + deltaR][curSetColIdx + deltaC] = true;
+			if (newBoard.Sum(a => a.Count(b => b)) >= gridRenders.Length) break;
+		}
+		if (puzzleSettings.FoaboruEnsureConnectivity)
+		{
+			// If the board is one giant region, it is a valid puzzle.
+			// First, find the first placed tile.
+			var expectedTotalCount = newBoard.Sum(a => a.Count(b => b));
+			var notFirstActive = true;
+			var firstRow = -1;
+			var firstCol = -1;
+			for (var row = 0; row < rowCount && notFirstActive; row++)
+				for (var col = 0; col < colCount; col++)
+					if (newBoard[row][col])
+					{
+						notFirstActive = false;
+						firstCol = col;
+						firstRow = row;
+						break;
+					}
+			// Then perform a flood fill with the first found coordinate.
+			var allSearchedTiles = new List<int[]>();
+			var curSearchedTiles = new List<int[]> { new[] { firstRow, firstCol } };
+			while (curSearchedTiles.Any())
+			{
+				var nextSearchableTiles = new List<int[]>();
+				foreach (var curTile in curSearchedTiles)
+				{
+					allSearchedTiles.Add(curTile);
+					var deltasRow = new[] { 0, 1, -1, 0 };
+					var deltasCol = new[] { 1, 0, 0, -1 };
+					for (var x = 0; x < 4; x++)
+					{
+						var nextCoord = new[] { curTile[0] + deltasRow[x], curTile[1] + deltasCol[x] };
+						if (!allSearchedTiles.Any(a => a.SequenceEqual(nextCoord))
+							&& nextCoord[0] >= 0 && nextCoord[0] < rowCount && nextCoord[1] >= 0 && nextCoord[1] < colCount &&
+							newBoard[nextCoord[0]][nextCoord[1]])
+							nextSearchableTiles.Add(nextCoord);
+					}
+				}
+				curSearchedTiles = nextSearchableTiles;
+			}
+
+			if (allSearchedTiles.Count != expectedTotalCount)
+				goto retryGen;
 		}
 		QuickLog("Generated board:");
 		for (var x = 0; x < rowCount; x++)
@@ -444,10 +521,16 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		QuickLog("One possible solution:");
 		for (var x = 0; x < rowCount; x++)
 			QuickLog(boardColorIdx[x].Select(a => "XKAW"[a]).Join(""));
+		boardSelectIdxes.Clear();
 		for (var row = 0; row < rowCount; row++)
 			for (var col = 0; col < colCount; col++)
 			{
 				selectedTiles[row, col] = newBoard[row][col];
+				if (newBoard[row][col])
+                {
+					var idxGroup = colCount * row + col;
+					boardSelectIdxes.Add(idxGroup);
+                }
 				tileIdxesAll[row, col] = 0;
 			}
 		UpdatePuzzle();
@@ -455,12 +538,22 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 	}
 	void UpdatePuzzle()
     {
-		for (var x = 0; x < gridRenders.Length; x++)
+		for (var x = 0; x < gridSelectables.Length; x++)
         {
-			var rowIdx = x / colCount;
-			var colIdx = x % colCount;
-			gridRenders[x].gameObject.SetActive(selectedTiles[rowIdx, colIdx]);
+			if (x >= boardSelectIdxes.Count)
+			{
+				gridRenders[x].gameObject.SetActive(false);
+				gridRenders[x].transform.localPosition = Vector3.zero;
+				continue;
+			}
+			var selectedCoordIdx = boardSelectIdxes[x];
+
+			var rowIdx = selectedCoordIdx / colCount;
+			var colIdx = selectedCoordIdx % colCount;
+			gridRenders[x].gameObject.SetActive(true);
+			//gridRenders[x].gameObject.SetActive(selectedTiles[rowIdx, colIdx]);
 			gridRenders[x].material.color = colorsRender[tileIdxesAll[rowIdx, colIdx]];
+			gridRenders[x].transform.localPosition = new Vector3(colIdx - 3.5f, 0, rowIdx - 3.5f);
 		}
     }
 
@@ -647,12 +740,12 @@ public class FoaboruPuzzleScript : MonoBehaviour {
     {
 		var allPossiblePlacements = determinedPlacements ?? GetAllPossiblePlacements(_2Dboard);
 		// "Human Deduction" section
-		allPossiblePlacements = CollapseCombinations(_2Dboard, allPossiblePlacements);
+		var allPossiblePlacementsCollapsed = CollapseCombinations(_2Dboard, allPossiblePlacements);
 		var new2DBoardAfterPlacement = _2Dboard.Select(a => a.ToArray()).ToArray();
 		var coarseSolved = true;
-        for (var x = 0; x < allPossiblePlacements.Count && coarseSolved; x++)
+        for (var x = 0; x < allPossiblePlacementsCollapsed.Count && coarseSolved; x++)
         {
-			var curPlacement = allPossiblePlacements[x];
+			var curPlacement = allPossiblePlacementsCollapsed[x];
 			var rCFromPlacement = curPlacement.Value;
 			var patternFromPlacement = possiblePiecePlacements[curPlacement.Key];
 			if (DoesPatternFitBoard(new2DBoardAfterPlacement, patternFromPlacement, rCFromPlacement[0], rCFromPlacement[1]))
@@ -675,12 +768,12 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			for (var r = 0; r < patternFromPlacement.Length; r++)
 				for (var c = 0; c < patternFromPlacement[0].Length; c++)
 					new2DBoard[rCFromPlacement[0] + r][rCFromPlacement[1] + c] ^= patternFromPlacement[r][c];
-			var newAllowedPlacements = allPossiblePlacements.Skip(x + 1)
-				.Where(a => DoesPatternFitBoard(new2DBoard, possiblePiecePlacements[a.Key], a.Value[0], a.Value[1])).ToList();
-			// To try to reduce the time taken, remove the current possibility, and all previous possibilities, then any that would not work with the remaining options.
 			if (!new2DBoard.Any(a => a.Any(b => b)))
 				return 1; // There is no point continuing to loop if the only option left cleans the entire board.
-			else if (newAllowedPlacements.Any() && IsBoardPossibleTheoretical(new2DBoard, newAllowedPlacements))
+			var newAllowedPlacements = allPossiblePlacements.Skip(x + 1)
+				.Where(a => DoesPatternFitBoard(TrimBoard(new2DBoard), possiblePiecePlacements[a.Key], a.Value[0], a.Value[1])).ToList();
+			// To try to reduce the time taken, remove the current possibility, and all previous possibilities, then any that would not work with the remaining options.
+			if (newAllowedPlacements.Any() && IsBoardPossibleTheoretical(new2DBoard, newAllowedPlacements))
 				countedSolutions += CountSolutions(new2DBoard, newAllowedPlacements);
         }
 		return countedSolutions;
@@ -700,11 +793,11 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 				for (var c = 0; c < patternFromPlacement[0].Length; c++)
 					new2DBoard[rCFromPlacement[0] + r][rCFromPlacement[1] + c] ^= patternFromPlacement[r][c];
 			var newAllowedPlacements = allPossiblePlacements.Skip(x + 1)
-				.Where(a => DoesPatternFitBoard(new2DBoard, possiblePiecePlacements[a.Key], a.Value[0], a.Value[1])).ToList();
+				.Where(a => DoesPatternFitBoard(TrimBoard(new2DBoard), possiblePiecePlacements[a.Key], a.Value[0], a.Value[1])).ToList();
 			// To try to reduce the time taken, remove the current possibility, and all previous possibilities, then any that would not work with the remaining options.
 			if (!new2DBoard.Any(a => a.Any(b => b)))
 				return true; // There is no point continuing to loop if the only option left cleans the entire board.
-			else if (newAllowedPlacements.Any() && IsBoardPossibleTheoretical(new2DBoard, newAllowedPlacements))
+			if (newAllowedPlacements.Any() && IsBoardPossibleTheoretical(new2DBoard, newAllowedPlacements))
 				foundSolution |= IsBoardPossible(new2DBoard, newAllowedPlacements);
         }
 		return foundSolution;

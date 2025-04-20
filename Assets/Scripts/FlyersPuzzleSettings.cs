@@ -11,8 +11,9 @@ public class FlyersPuzzleSettings {
         Instant
     }
     public bool FoaboruEnsureUniqueSolution = false;
+    public bool FoaboruEnsureConnectivity = false;
     public SubmissionType FoaboruForceSubmissionType = SubmissionType.NA;
-    public int FoaboruBoardLength = 8;
-    public int FoaboruBoardWidth = 8;
+    public int FoaboruBoardLength = 10;
+    public int FoaboruBoardWidth = 10;
 
 }
