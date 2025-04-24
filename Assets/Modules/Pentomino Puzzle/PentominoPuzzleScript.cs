@@ -179,14 +179,25 @@ public class PentominoPuzzleScript : MonoBehaviour {
 			QuickLog("Module disarmed with the following board:");
 			foreach (var row in obtainedBoard)
 				QuickLog(row.Select(a => !a.Any() ? '-' : a.Count == 1 ? "ABCDEFGHIJKLMNOPQRSTUVWXYZ"[a.Single()] : '?').Join(""));
-			foreach (var renderer in goalRenderers)
-				renderer.material.color = Color.green;
+			StartCoroutine(FadeColors());
 			moduleSolved = true;
 			modSelf.HandlePass();
 			mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
 		}
 	}
-
+	IEnumerator FadeColors()
+    {
+		var lastColors = goalRenderers.Select(a => a.material.color).ToArray();
+		for (float t = 0; t < 1f; t += Time.deltaTime)
+		{
+            for (int n = 0; n < goalRenderers.Length; n++)
+            {
+                MeshRenderer renderer = goalRenderers[n];
+                renderer.material.color = Color.Lerp(lastColors[n], Color.black, t);
+            }
+            yield return null;
+		}
+	}
 	#region Interaction Methods
 	void HandleIdxTransformation(int idx)
     {
