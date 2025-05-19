@@ -79,7 +79,7 @@ public class ObliviousMazeryScript : MonoBehaviour
         moduleID = ++modIDCnt;
 
         usedTexture = new Texture2D(mazeImgWidth, mazeImgHeight, TextureFormat.RGBA32, true, true);
-        usedTexture.alphaIsTransparency = true;
+        //usedTexture.alphaIsTransparency = true;
         usedTexture.wrapMode = TextureWrapMode.Clamp;
         usedTexture.filterMode = FilterMode.Point;
         affectedRenderer.material.color = Color.white;

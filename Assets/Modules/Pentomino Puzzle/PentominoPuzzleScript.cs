@@ -60,11 +60,11 @@ public class PentominoPuzzleScript : MonoBehaviour {
 	};
 	Color[] selectedColors;
 	MinoShape[] allMinos;
-	[SerializeField] KMSelectable[] gridSelectables, modifierSelectables;
-	[SerializeField] MeshRenderer[] gridRenderers, hlRenderers, goalRenderers;
-	[SerializeField] KMBombModule modSelf;
-	[SerializeField] KMAudio mAudio;
-	[SerializeField] KMSelectable logButton;
+	public KMSelectable[] gridSelectables, modifierSelectables;
+	public MeshRenderer[] gridRenderers, hlRenderers, goalRenderers;
+	public KMBombModule modSelf;
+	public KMAudio mAudio;
+	public KMSelectable logButton;
 	static readonly string[] pentominoEncodings = new[] {
 		"OOOOO",
 		"OOOO;OXXX",
@@ -182,7 +182,7 @@ public class PentominoPuzzleScript : MonoBehaviour {
 			StartCoroutine(FadeColors());
 			moduleSolved = true;
 			modSelf.HandlePass();
-			mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
+			//mAudio.PlayGameSoundAtTransform(KMSoundOverride.SoundEffect.CorrectChime, transform);
 		}
 	}
 	IEnumerator FadeColors()
@@ -276,5 +276,36 @@ public class PentominoPuzzleScript : MonoBehaviour {
 			}
 		}
 	}
-    #endregion
+	#endregion
+#pragma warning disable 414
+	private readonly string TwitchHelpMessage = "\"!{0} A1 B2 C4\" [Presses a tile at that coordinate. Specify letter as column from left to right, row as number from top to bottom.] | \"!{0} l r u d v h cw\" [Moves the selected pentomino left, right, up, down, flip horizontally, vertically, or rotate CW.] | \"!{0} G5 R R H CW\" [Example of chaining transformation buttons and coordinate presses.]";
+#pragma warning restore 414
+	IEnumerable<KMSelectable> ProcessTwitchCommand(string cmd)
+    {
+		var output = new List<KMSelectable>();
+		var splitCmds = cmd.ToUpperInvariant().Split();
+		foreach (var portion in splitCmds)
+        {
+			switch (portion)
+            {
+				case "U": output.Add(modifierSelectables[0]); break;
+				case "R": output.Add(modifierSelectables[1]); break;
+				case "D": output.Add(modifierSelectables[2]); break;
+				case "L": output.Add(modifierSelectables[3]); break;
+				case "V": output.Add(modifierSelectables[4]); break;
+				case "H": output.Add(modifierSelectables[5]); break;
+				case "CW": output.Add(modifierSelectables[6]); break;
+				default:
+                    {
+						if (portion.Length != 2) return null;
+						var idxCol = "ABCDEFGHIJ".IndexOf(portion[0]);
+						var idxRow = "12345678".IndexOf(portion[1]);
+						if (idxCol == -1 || idxRow == -1) return null;
+						output.Add(gridSelectables[idxRow * 10 + idxCol]);
+                    }
+					break;
+            }
+        }
+		return output;
+    }
 }

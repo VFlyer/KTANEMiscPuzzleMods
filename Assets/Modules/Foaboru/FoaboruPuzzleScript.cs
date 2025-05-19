@@ -57,7 +57,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 	int[,] tileIdxesAll;
 	bool[,] selectedTiles;
 	static List<KeyValuePair<int, int[]>> allPossiblePlacementsGivenBoard;
-	bool checkAmbiguityOnGen = false, interactable = false, moduleSolved;
+	bool checkAmbiguityOnGen = false, checkIslandMinos, interactable = false, moduleSolved;
 
 	FlyersPuzzleSettings.SubmissionType forcedSubmission = FlyersPuzzleSettings.SubmissionType.NA;
 
@@ -87,14 +87,16 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			puzzleSettings = ModSettings.Settings;
 			forcedSubmission = puzzleSettings.FoaboruForceSubmissionType;
 			checkAmbiguityOnGen = puzzleSettings.FoaboruEnsureUniqueSolution;
+			checkIslandMinos = puzzleSettings.FoaboruEnsureConnectivity;
 			rowCount = Mathf.Clamp(puzzleSettings.FoaboruBoardWidth, 4, 10);
 			colCount = Mathf.Clamp(puzzleSettings.FoaboruBoardLength, 4, 10);
 		}
 		catch
         {
 			forcedSubmission = FlyersPuzzleSettings.SubmissionType.NA;
-			checkAmbiguityOnGen = true;
-        }
+			checkAmbiguityOnGen = false;
+			checkIslandMinos = false;
+		}
 		checkAmbiguityOnGen = false; // Temporary until stronger optimizations are made.
     }
 	// Use this for initialization
@@ -406,7 +408,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		//Debug.LogFormat(allPossiblePlacementsGivenBoard.Select(a => string.Format("[{0}: {1}]", possiblePiecePlacements[a.Key].Select(b => b.Select(c => c ? "o" : "-").Join("")).Join(";"), string.Format("{0}{1}", alphabet[a.Value.Last()], a.Value.First() + 1))).Join(";"));
 		var idxesShuffled = Enumerable.Range(0, allPossiblePlacementsGivenBoard.Count).ToList();
 		var firstPlacementIdx = idxesShuffled.PickRandom();
-		var solutionPiecesIdx = new List<int> { firstPlacementIdx };
+		//var solutionPiecesIdx = new List<int> { firstPlacementIdx };
 		idxesShuffled.Remove(firstPlacementIdx);
 		var firstPlacementCoord = allPossiblePlacementsGivenBoard[firstPlacementIdx].Value;
 		var firstPlacementPiece = possiblePiecePlacements[allPossiblePlacementsGivenBoard[firstPlacementIdx].Key];
@@ -445,9 +447,9 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			}
 			idxesShuffled.Remove(nextIdx);
 			if (removeOption) continue;
-			solutionPiecesIdx.Add(nextIdx);
-			/*
-			 * Ommited since procedure can be done outside, rather than inside.
+			//solutionPiecesIdx.Add(nextIdx);
+			
+			// Ommited since procedure can be done outside, rather than inside.
 			// Final check:
 			// The piece must be adjacent to another piece on the board, connected to at most 2 colors.
 			var distinctColors = new List<int>();
@@ -485,14 +487,15 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 							boardColorIdx[curSetRowIdx + deltaR][curSetColIdx + deltaC] = firstColorNotUsed;
 						}
 			}
-			*/
+			/*
 			for (var deltaR = 0; deltaR < curSetPiece.Length; deltaR++)
 				for (var deltaC = 0; deltaC < curSetPiece[deltaR].Length; deltaC++)
 					if (curSetPiece[deltaR][deltaC])
 						newBoard[curSetRowIdx + deltaR][curSetColIdx + deltaC] = true;
-			if (solutionPiecesIdx.Count * 4 >= gridRenders.Length) break;
+			*/
+			//if (solutionPiecesIdx.Count * 4 >= gridRenders.Length) break;
 		}
-		if (puzzleSettings.FoaboruEnsureConnectivity)
+		if (checkIslandMinos)
 		{
 			// If the board is one giant region, it is a valid puzzle.
 			// First, find the first placed tile.
@@ -534,10 +537,10 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			if (allSearchedTiles.Count != expectedTotalCount)
 				goto retryGen;
 		}
-		int[] idxColorSolution = new int[solutionPiecesIdx.Count];
+		/*int[] idxColorSolution = new int[solutionPiecesIdx.Count];
 		List<int>[] idxAdjacents = new List<int>[solutionPiecesIdx.Count];
 		idxColorSolution[0] = 1;
-
+		*/
 		QuickLog("Generated board:");
 		for (var x = 0; x < rowCount; x++)
 			QuickLog(newBoard[x].Select(a => a ? "O" : "-").Join(""));
@@ -576,7 +579,7 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			gridRenders[x].gameObject.SetActive(true);
 			//gridRenders[x].gameObject.SetActive(selectedTiles[rowIdx, colIdx]);
 			gridRenders[x].material.color = colorsRender[tileIdxesAll[rowIdx, colIdx]];
-			gridRenders[x].transform.localPosition = new Vector3(colIdx - ( colCount - 1 ) / 2f, 0, rowIdx - (rowCount - 1) / 2f);
+			gridRenders[x].transform.localPosition = new Vector3(colIdx - ( colCount - 1 ) / 2f, 0, -(rowIdx - (rowCount - 1) / 2f));
 		}
     }
 
@@ -610,14 +613,15 @@ public class FoaboruPuzzleScript : MonoBehaviour {
         {
 			var startCoord = keyPlacement.Value;
 			var pattern = possiblePiecePlacements[keyPlacement.Key];
-			for (var rowPat = 0; rowPat < pattern.Length; rowPat++)
-				for (var colPat = 0; colPat < pattern[0].Length; colPat++)
-					if (pattern[rowPat][colPat])
-					{
-						var coordAfterShift = new[] { startCoord[0] + rowPat, startCoord[1] + colPat };
-						if (!visitedCoords.Any(a => a.SequenceEqual(coordAfterShift)))
-						visitedCoords.Add(coordAfterShift);
-					}
+			if (DoesPatternFitBoard(_2Dboard, pattern, startCoord[0], startCoord[1]))
+				for (var rowPat = 0; rowPat < pattern.Length; rowPat++)
+					for (var colPat = 0; colPat < pattern[0].Length; colPat++)
+						if (pattern[rowPat][colPat])
+						{
+							var coordAfterShift = new[] { startCoord[0] + rowPat, startCoord[1] + colPat };
+							if (!visitedCoords.Any(a => a.SequenceEqual(coordAfterShift)))
+							visitedCoords.Add(coordAfterShift);
+						}
 		}
 
 		for (var row = 0; row < _2Dboard.Length; row++)
@@ -784,6 +788,8 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		var countedSolutions = 0;
 		for (var x = 0; x < allPossiblePlacements.Count && countedSolutions < 2; x++)
         {
+			if (!IsBoardPossibleTheoretical(_2Dboard, allPossiblePlacements.Skip(x).ToList())) break;
+			// To also try to reduce the time taken, check if the board can still be solved with the remaining placement options.
 			var curPlacement = allPossiblePlacements[x];
 			var new2DBoard = _2Dboard.Select(a => a.ToArray()).ToArray();
 			var patternFromPlacement = possiblePiecePlacements[curPlacement.Key];
@@ -850,21 +856,56 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 		var regexSetAll = Regex.Match(cmd, @"^setall\s[KAW\-\s]+$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 		if (regexSubmit.Success)
         {
-			var possibleOnes = new[] { "submit", "submitfast", "submitinstant" };
+			var possibleOnes = new List<string> { "submit", "submitfast", "submitinstant" };
 			var subVal = regexSubmit.Value.ToLowerInvariant();
 			yield return null;
-			submitButtons[Enumerable.Range(0, 3).FirstOrDefault(a => possibleOnes[a] == subVal)].OnInteract();
+			submitButtons[possibleOnes.IndexOf(subVal)].OnInteract();
 			yield return "solve";
 			yield return "strike";
 			yield break;
         }
 		else if (regexSetAll.Success)
         {
-			for (var x = 0; x < gridSelectables.Length; x++)
+			var matchedValGrid = regexSetAll.Value.ToLowerInvariant().Split().Skip(1).Join("");
+			if (matchedValGrid.Length != rowCount * colCount)
             {
-
+				yield return string.Format("sendtochaterror You specified {0} tile(s) to be affected, which does not match the size of the grid.", matchedValGrid.Length);
+				yield break;
             }
-
+			Debug.LogFormat(matchedValGrid);
+			var selectablesAffected = new List<KMSelectable>();
+			for (var x = 0; x < matchedValGrid.Length; x++)
+            {
+				var y = x;
+				var curChr = matchedValGrid[x];
+				if (boardSelectIdxes.Contains(y))
+                {
+					var relevantSelectable = gridSelectables[boardSelectIdxes.IndexOf(y)];
+					var idxToEnd = "kaw".IndexOf(curChr);
+					var idxCur = tileIdxesAll[y / colCount, y % colCount];
+					if (idxToEnd == -1)
+					{
+						yield return string.Format("sendtochaterror There is a tile in {0}{1} but you are attempting to skip a tile there.", alphabet[y % colCount], y / colCount + 1);
+						yield break;
+					}
+					selectablesAffected.AddRange(Enumerable.Repeat(relevantSelectable, (3 + idxToEnd - idxCur) % 3));
+				}
+				else if (curChr != '-')
+                {
+					yield return string.Format("sendtochaterror There is no tile in {0}{1} but you are attempting to toggle a tile there.", alphabet[y % colCount], y / colCount + 1);
+					yield break;
+				}
+            }
+			if (selectablesAffected.Any())
+            {
+				foreach (var selectable in selectablesAffected)
+                {
+					yield return null;
+					selectable.OnInteract();
+                }
+            }
+			else
+				yield return "sendtochat {0}, the grid has already been set to the desired state you specified.";
 			yield break;
         }
 		var intCmd = cmd.ToLowerInvariant().Trim();
