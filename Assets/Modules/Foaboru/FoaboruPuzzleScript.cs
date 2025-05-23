@@ -435,21 +435,11 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			for (var dR = 0; dR < curSetPiece.Length && !removeOption; dR++)
 				for (var dC = 0; dC < curSetPiece[dR].Length && !removeOption; dC++)
 					removeOption |= newBoard[dR + curSetRowIdx][dC + curSetColIdx] && curSetPiece[dR][dC];
-			// Second check (to optimize later on):
-			// If the placed piece does not allow a unique solution, remove it.
-			if (checkAmbiguityOnGen && !removeOption)
-            {
-				var theoreticalBoard = newBoard.Select(a => a.ToArray()).ToArray();
-				for (var dR = 0; dR < curSetPiece.Length && !removeOption; dR++)
-					for (var dC = 0; dC < curSetPiece[dR].Length && !removeOption; dC++)
-						theoreticalBoard[dR + curSetRowIdx][dC + curSetColIdx] |= curSetPiece[dR][dC];
-				removeOption |= CountSolutions(theoreticalBoard) > 1;
-			}
 			idxesShuffled.Remove(nextIdx);
 			if (removeOption) continue;
 			//solutionPiecesIdx.Add(nextIdx);
 			
-			// Ommited since procedure can be done outside, rather than inside.
+			// TBD since procedure can be done outside, rather than inside.
 			// Final check:
 			// The piece must be adjacent to another piece on the board, connected to at most 2 colors.
 			var distinctColors = new List<int>();
@@ -495,9 +485,13 @@ public class FoaboruPuzzleScript : MonoBehaviour {
 			*/
 			//if (solutionPiecesIdx.Count * 4 >= gridRenders.Length) break;
 		}
+        // Second check (to optimize later on):
+        // If the placed piece does not allow a unique solution, remove it.
+        if (checkAmbiguityOnGen && CountSolutions(newBoard) > 1) goto retryGen;
+		// Other check:
+		// If the board is one giant region, it is a valid puzzle.
 		if (checkIslandMinos)
 		{
-			// If the board is one giant region, it is a valid puzzle.
 			// First, find the first placed tile.
 			var expectedTotalCount = newBoard.Sum(a => a.Count(b => b));
 			var notFirstActive = true;
