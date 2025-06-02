@@ -25,6 +25,6 @@ MonoBehaviour:
     Sudoku: actual4x4x4SudokuModule\nFoaboru: foaboruModule\nInstant Insanity: InstantInsanityModule\nPuzzle
     Pandemonium: PuzzlePandemoniumModule\nFootover: FootoverModule\nPentomino Puzzle:
     PentominoPuzzleModule\n"
-  version: 1.5
+  version: 1.5.01
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 0127196c426a5c14ea656aa5d80bbe48, type: 3}

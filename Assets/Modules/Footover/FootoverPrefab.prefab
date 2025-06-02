@@ -1736,6 +1736,7 @@ GameObject:
   - component: {fileID: 114331563693784558}
   - component: {fileID: 114543562190161266}
   - component: {fileID: 114195808169760086}
+  - component: {fileID: 114647458808869114}
   m_Layer: 0
   m_Name: FootoverPrefab
   m_TagString: Untagged
@@ -9529,6 +9530,7 @@ MonoBehaviour:
   resetSelectable: {fileID: 114608936516698744}
   modSelf: {fileID: 114714756302230818}
   mAudio: {fileID: 114331563693784558}
+  solveAnimScript: {fileID: 0}
 --- !u!114 &114196152522620412
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -10725,6 +10727,92 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShaderNames:
   - KT/Mobile/DiffuseTint
+--- !u!114 &114647458808869114
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1705920628506050}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b2c5b70402d5ba4c80d81ecc5c4acbc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  affectedRenders:
+  - {fileID: 23626038684582610}
+  - {fileID: 23048564489367216}
+  - {fileID: 23454665039546180}
+  - {fileID: 23735010202385152}
+  - {fileID: 23497547468110784}
+  - {fileID: 23730276507603380}
+  - {fileID: 23718794004735864}
+  - {fileID: 23681832999311854}
+  - {fileID: 23145525117303062}
+  - {fileID: 23598440081103170}
+  - {fileID: 23584472927177988}
+  - {fileID: 23504803695319828}
+  - {fileID: 23982772990108912}
+  - {fileID: 23370589043853898}
+  - {fileID: 23888271557318528}
+  - {fileID: 23375269615796246}
+  - {fileID: 23181545194907692}
+  - {fileID: 23949845389314592}
+  - {fileID: 23630124665019114}
+  - {fileID: 23641264372244568}
+  - {fileID: 23284495196589786}
+  - {fileID: 23375437920895294}
+  - {fileID: 23994692316388304}
+  - {fileID: 23987070047571642}
+  - {fileID: 23701202290920062}
+  - {fileID: 23724874159725046}
+  - {fileID: 23995647477562272}
+  - {fileID: 23681926778344512}
+  - {fileID: 23656996190200278}
+  - {fileID: 23735819956785168}
+  - {fileID: 23137251785134050}
+  - {fileID: 23871250124429168}
+  - {fileID: 23054633639020852}
+  - {fileID: 23257649739387796}
+  - {fileID: 23711257250252100}
+  - {fileID: 23990366637802436}
+  affectedMeshes:
+  - {fileID: 102277833608972150}
+  - {fileID: 102140423993039478}
+  - {fileID: 102439621530764280}
+  - {fileID: 102674729570185784}
+  - {fileID: 102076320561733618}
+  - {fileID: 102959589511577934}
+  - {fileID: 102230651278962906}
+  - {fileID: 102157457939225526}
+  - {fileID: 102271462757663846}
+  - {fileID: 102812558894152250}
+  - {fileID: 102529763601337310}
+  - {fileID: 102162614575418850}
+  - {fileID: 102302650481927156}
+  - {fileID: 102172422654498820}
+  - {fileID: 102460503625081004}
+  - {fileID: 102512384607434646}
+  - {fileID: 102288823421703828}
+  - {fileID: 102469709465185114}
+  - {fileID: 102521668737837672}
+  - {fileID: 102586245812630894}
+  - {fileID: 102600766030347738}
+  - {fileID: 102035807006317476}
+  - {fileID: 102740561558599804}
+  - {fileID: 102316087786690980}
+  - {fileID: 102365848362662460}
+  - {fileID: 102628552838174464}
+  - {fileID: 102695353981737518}
+  - {fileID: 102653357607641352}
+  - {fileID: 102726479285877332}
+  - {fileID: 102136140246987240}
+  - {fileID: 102313288782372162}
+  - {fileID: 102821299648005974}
+  - {fileID: 102574983967593296}
+  - {fileID: 102401577846976280}
+  - {fileID: 102547071730869292}
+  - {fileID: 102017121197399788}
+  usedAudio: {fileID: 114331563693784558}
 --- !u!114 &114647758677716350
 MonoBehaviour:
   m_ObjectHideFlags: 1

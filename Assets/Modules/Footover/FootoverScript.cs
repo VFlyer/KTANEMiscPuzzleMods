@@ -11,6 +11,7 @@ public class FootoverScript : MonoBehaviour {
 	public KMSelectable resetSelectable;
 	public KMBombModule modSelf;
 	public KMAudio mAudio;
+	public FootoverSolveAnim solveAnimScript;
 
 	const string base36 = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
 		alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -41,7 +42,7 @@ public class FootoverScript : MonoBehaviour {
 		var movesToShuffle = 25 + Enumerable.Range(0, 50).Count(a => Random.value < 0.5f);
 		ScrambleBoard(movesToShuffle);
 		QuickLogDebug("Applied moves in this order: {0}", encodedMoves.Join(", "));
-		QuickLogDebug("A total of {0} moves have been performed to shuffle this board. See filtered log for the moves performed.", encodedMoves.Count);
+		QuickLog("A total of {0} moves have been performed to shuffle this board. See filtered log for the moves performed.", encodedMoves.Count);
 		QuickLog("Initial State:");
         for (var x = 0; x < 6; x++)
 			QuickLog("{0}", curBoard.Skip(6 * x).Take(6).Select(a => base36[a]).Join());
@@ -131,8 +132,8 @@ public class FootoverScript : MonoBehaviour {
 		if (curBoard.SequenceEqual(solvedBoardArrangement))
 			goto retryScramble;
     }
-
-	void HandleColumnShift(int colIdx, int amount)
+    #region Move Handling
+    void HandleColumnShift(int colIdx, int amount)
     {
 		// Shift the column up by that amount;
 		var amountToShiftUp = amount % 6;
@@ -155,15 +156,17 @@ public class FootoverScript : MonoBehaviour {
         for (var x = 0; x < 6; x++)
 			curBoard[6 * rowIdx + x] = (curBoard[6 * rowIdx + x] + invAmnt) % 36;
     }
-
-	void HandleBoardCheck()
+    #endregion
+    void HandleBoardCheck()
     {
 		if (curBoard.SequenceEqual(solvedBoardArrangement))
         {
 			moduleSolved = true;
 			QuickLog("Solved!{0}", !TPRequestAutosolve ? " Give yourself a rest from all of this." : "");
 			modSelf.HandlePass();
-        }
+			if (solveAnimScript != null)
+				StartCoroutine(solveAnimScript.StartSolveAnim());
+		}
     }
 
 	void UpdateBoard()
@@ -261,7 +264,7 @@ public class FootoverScript : MonoBehaviour {
 				}
 				else
                 {
-					yield return "sendtochaterror You can not shift a column left or right a row up or down, by any amount!";
+					yield return "sendtochaterror You can not shift a column left or right, nor a row up or down, by any amount!";
 					yield break;
 				}
 			}
