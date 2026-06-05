@@ -509,7 +509,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &86829595
 MeshFilter:
@@ -701,7 +701,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &115877286
 MeshFilter:
@@ -1339,6 +1339,7 @@ GameObject:
   - component: {fileID: 229896275}
   - component: {fileID: 229896274}
   - component: {fileID: 229896273}
+  - component: {fileID: 229896276}
   m_Layer: 0
   m_Name: CompCell (2)
   m_TagString: Untagged
@@ -1378,7 +1379,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 1131676851}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 229896276}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -1424,6 +1426,20 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 229896271}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!64 &229896276
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 229896271}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &237124780
 GameObject:
@@ -2188,6 +2204,7 @@ GameObject:
   - component: {fileID: 364501154}
   - component: {fileID: 364501153}
   - component: {fileID: 364501152}
+  - component: {fileID: 364501155}
   m_Layer: 0
   m_Name: CompCell
   m_TagString: Untagged
@@ -2227,7 +2244,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 1802277871}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 364501155}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -2273,6 +2291,20 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 364501150}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!64 &364501155
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 364501150}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &365756275
 GameObject:
@@ -2706,7 +2738,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &390930921
 MeshFilter:
@@ -2914,6 +2946,117 @@ Prefab:
     - {fileID: 2300000, guid: 7ee9df4a6fa6b35418bee065e3e6ba00, type: 3}
   m_ParentPrefab: {fileID: 100100000, guid: 7ee9df4a6fa6b35418bee065e3e6ba00, type: 3}
   m_IsPrefabParent: 0
+--- !u!1 &465381698
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 465381701}
+  - component: {fileID: 465381703}
+  - component: {fileID: 465381700}
+  - component: {fileID: 465381702}
+  - component: {fileID: 465381699}
+  m_Layer: 0
+  m_Name: BtnSubmit
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &465381699
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 465381698}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 1702003387, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Parent: {fileID: 0}
+  Children: []
+  IsPassThrough: 0
+  ChildRowLength: 0
+  Highlight: {fileID: 703589253}
+  SelectableColliders:
+  - {fileID: 465381700}
+  DefaultSelectableIndex: 0
+  AllowSelectionWrapX: 0
+  AllowSelectionWrapY: 0
+  ForceSelectionHighlight: 0
+  ForceInteractionHighlight: 0
+--- !u!136 &465381700
+CapsuleCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 465381698}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  m_Radius: 0.5
+  m_Height: 2
+  m_Direction: 1
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!4 &465381701
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 465381698}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.06, y: 0.016, z: 0.02}
+  m_LocalScale: {x: 0.02, y: 0.002, z: 0.02}
+  m_Children:
+  - {fileID: 1438458229}
+  - {fileID: 703589256}
+  m_Father: {fileID: 477791380}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!23 &465381702
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 465381698}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 0
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+--- !u!33 &465381703
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 465381698}
+  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &477791375
 GameObject:
   m_ObjectHideFlags: 0
@@ -2946,7 +3089,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   mAudio: {fileID: 477791378}
   modSelf: {fileID: 477791379}
-  componentSelectables: []
+  componentSelectables:
+  - {fileID: 364501152}
+  - {fileID: 1883438445}
+  - {fileID: 229896273}
+  - {fileID: 825311877}
   puzzleCells:
   - {fileID: 2097481277}
   - {fileID: 945166101}
@@ -2963,8 +3110,12 @@ MonoBehaviour:
   resultTexts:
   - {fileID: 956356527}
   - {fileID: 1486646555}
-  componentTexts: []
-  submitBtn: {fileID: 0}
+  componentTexts:
+  - {fileID: 1224694461}
+  - {fileID: 1392226827}
+  - {fileID: 1235893277}
+  - {fileID: 2081247250}
+  submitBtn: {fileID: 465381699}
   resetBtn: {fileID: 0}
 --- !u!114 &477791377
 MonoBehaviour:
@@ -2980,6 +3131,23 @@ MonoBehaviour:
   Parent: {fileID: 0}
   Children:
   - {fileID: 0}
+  - {fileID: 364501152}
+  - {fileID: 1883438445}
+  - {fileID: 229896273}
+  - {fileID: 825311877}
+  - {fileID: 465381699}
+  - {fileID: 2097481276}
+  - {fileID: 945166102}
+  - {fileID: 606472889}
+  - {fileID: 1749213029}
+  - {fileID: 1959596084}
+  - {fileID: 854669946}
+  - {fileID: 1124349262}
+  - {fileID: 1616519166}
+  - {fileID: 792953516}
+  - {fileID: 1743309114}
+  - {fileID: 1717543527}
+  - {fileID: 1049162253}
   IsPassThrough: 0
   ChildRowLength: 6
   Highlight: {fileID: 999983631}
@@ -3030,6 +3198,7 @@ Transform:
   - {fileID: 833928342}
   - {fileID: 850429008}
   - {fileID: 589150322}
+  - {fileID: 465381701}
   m_Father: {fileID: 0}
   m_RootOrder: 2
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -3514,7 +3683,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &526733467
 MeshFilter:
@@ -3720,7 +3889,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &564496276
 MeshFilter:
@@ -3989,6 +4158,7 @@ GameObject:
   - component: {fileID: 606472890}
   - component: {fileID: 606472889}
   - component: {fileID: 606472888}
+  - component: {fileID: 606472892}
   m_Layer: 0
   m_Name: EnergyCell (2)
   m_TagString: Untagged
@@ -4042,7 +4212,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 115877285}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 606472892}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -4088,6 +4259,20 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 606472886}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!64 &606472892
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 606472886}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &607825276
 GameObject:
@@ -4485,7 +4670,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &657633313
 MeshFilter:
@@ -4784,7 +4969,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &694917878
 MeshFilter:
@@ -4864,6 +5049,57 @@ MeshFilter:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 698437097}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &703589252
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 100002, guid: 6607579c28255954188b6c6ce76621a0, type: 3}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 703589256}
+  - component: {fileID: 703589255}
+  - component: {fileID: 703589253}
+  m_Layer: 0
+  m_Name: CircleOutline
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &703589253
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 703589252}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  OutlineAmount: 0
+--- !u!33 &703589255
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 3300002, guid: 6607579c28255954188b6c6ce76621a0,
+    type: 3}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 703589252}
+  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!4 &703589256
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 400002, guid: 6607579c28255954188b6c6ce76621a0, type: 3}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 703589252}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 465381701}
+  m_RootOrder: 1
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &723435690
 GameObject:
   m_ObjectHideFlags: 0
@@ -5160,6 +5396,7 @@ GameObject:
   - component: {fileID: 792953517}
   - component: {fileID: 792953516}
   - component: {fileID: 792953519}
+  - component: {fileID: 792953520}
   m_Layer: 0
   m_Name: EnergyCell (2)
   m_TagString: Untagged
@@ -5199,7 +5436,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 657633312}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 792953520}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -5260,6 +5498,20 @@ MonoBehaviour:
   conduitRenderer: {fileID: 792953517}
   displayMesh: {fileID: 1454315746}
   cellSelectable: {fileID: 792953516}
+--- !u!64 &792953520
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 792953514}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &806907643
 GameObject:
   m_ObjectHideFlags: 0
@@ -5301,7 +5553,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &806907646
 MeshFilter:
@@ -5406,6 +5658,7 @@ GameObject:
   - component: {fileID: 825311879}
   - component: {fileID: 825311878}
   - component: {fileID: 825311877}
+  - component: {fileID: 825311880}
   m_Layer: 0
   m_Name: CompCell (3)
   m_TagString: Untagged
@@ -5445,7 +5698,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 1852443315}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 825311880}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -5491,6 +5745,20 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 825311875}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!64 &825311880
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 825311875}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &833928341
 GameObject:
@@ -5784,6 +6052,7 @@ GameObject:
   - component: {fileID: 854669947}
   - component: {fileID: 854669946}
   - component: {fileID: 854669945}
+  - component: {fileID: 854669949}
   m_Layer: 0
   m_Name: EnergyCell (5)
   m_TagString: Untagged
@@ -5837,7 +6106,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 86829594}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 854669949}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -5883,6 +6153,20 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 854669943}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!64 &854669949
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 854669943}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &861485022
 GameObject:
@@ -6251,6 +6535,7 @@ GameObject:
   - component: {fileID: 945166103}
   - component: {fileID: 945166102}
   - component: {fileID: 945166101}
+  - component: {fileID: 945166105}
   m_Layer: 0
   m_Name: EnergyCell (1)
   m_TagString: Untagged
@@ -6304,7 +6589,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 2005128042}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 945166105}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -6350,6 +6636,20 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 945166099}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!64 &945166105
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 945166099}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &954879596
 GameObject:
@@ -6790,7 +7090,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &1020783414
 MeshFilter:
@@ -6882,6 +7182,7 @@ GameObject:
   - component: {fileID: 1049162254}
   - component: {fileID: 1049162253}
   - component: {fileID: 1049162256}
+  - component: {fileID: 1049162257}
   m_Layer: 0
   m_Name: EnergyCell (5)
   m_TagString: Untagged
@@ -6921,7 +7222,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 2025184821}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 1049162257}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -6982,6 +7284,20 @@ MonoBehaviour:
   conduitRenderer: {fileID: 1049162254}
   displayMesh: {fileID: 543099216}
   cellSelectable: {fileID: 1049162253}
+--- !u!64 &1049162257
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1049162251}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1049717311
 GameObject:
   m_ObjectHideFlags: 0
@@ -7471,6 +7787,7 @@ GameObject:
   - component: {fileID: 1124349263}
   - component: {fileID: 1124349262}
   - component: {fileID: 1124349265}
+  - component: {fileID: 1124349266}
   m_Layer: 0
   m_Name: EnergyCell
   m_TagString: Untagged
@@ -7510,7 +7827,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 564496275}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 1124349266}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -7571,6 +7889,20 @@ MonoBehaviour:
   conduitRenderer: {fileID: 1124349263}
   displayMesh: {fileID: 1602143642}
   cellSelectable: {fileID: 1124349262}
+--- !u!64 &1124349266
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1124349260}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1131676849
 GameObject:
   m_ObjectHideFlags: 0
@@ -7612,7 +7944,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &1131676852
 MeshFilter:
@@ -9553,6 +9885,77 @@ MeshFilter:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1416975153}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1438458228
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 1438458229}
+  - component: {fileID: 1438458231}
+  - component: {fileID: 1438458230}
+  m_Layer: 0
+  m_Name: Cylinder
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1438458229
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1438458228}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 465381701}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!23 &1438458230
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1438458228}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 0
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+--- !u!33 &1438458231
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1438458228}
+  m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1441742376
 GameObject:
   m_ObjectHideFlags: 0
@@ -9665,7 +10068,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &1449595421
 MeshFilter:
@@ -9943,7 +10346,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &1474232768
 MeshFilter:
@@ -11440,6 +11843,7 @@ GameObject:
   - component: {fileID: 1616519167}
   - component: {fileID: 1616519166}
   - component: {fileID: 1616519169}
+  - component: {fileID: 1616519170}
   m_Layer: 0
   m_Name: EnergyCell (1)
   m_TagString: Untagged
@@ -11479,7 +11883,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 1474232767}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 1616519170}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -11540,6 +11945,20 @@ MonoBehaviour:
   conduitRenderer: {fileID: 1616519167}
   displayMesh: {fileID: 1943793539}
   cellSelectable: {fileID: 1616519166}
+--- !u!64 &1616519170
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1616519164}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1633067546
 GameObject:
   m_ObjectHideFlags: 0
@@ -12086,6 +12505,7 @@ GameObject:
   - component: {fileID: 1717543528}
   - component: {fileID: 1717543527}
   - component: {fileID: 1717543530}
+  - component: {fileID: 1717543531}
   m_Layer: 0
   m_Name: EnergyCell (4)
   m_TagString: Untagged
@@ -12125,7 +12545,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 390930920}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 1717543531}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -12186,6 +12607,20 @@ MonoBehaviour:
   conduitRenderer: {fileID: 1717543528}
   displayMesh: {fileID: 505124271}
   cellSelectable: {fileID: 1717543527}
+--- !u!64 &1717543531
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1717543525}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1723157673
 GameObject:
   m_ObjectHideFlags: 0
@@ -12305,6 +12740,7 @@ GameObject:
   - component: {fileID: 1743309115}
   - component: {fileID: 1743309114}
   - component: {fileID: 1743309117}
+  - component: {fileID: 1743309118}
   m_Layer: 0
   m_Name: EnergyCell (3)
   m_TagString: Untagged
@@ -12344,7 +12780,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 694917877}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 1743309118}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -12405,6 +12842,20 @@ MonoBehaviour:
   conduitRenderer: {fileID: 1743309115}
   displayMesh: {fileID: 319542875}
   cellSelectable: {fileID: 1743309114}
+--- !u!64 &1743309118
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1743309112}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1747413674
 GameObject:
   m_ObjectHideFlags: 0
@@ -12488,6 +12939,7 @@ GameObject:
   - component: {fileID: 1749213030}
   - component: {fileID: 1749213029}
   - component: {fileID: 1749213028}
+  - component: {fileID: 1749213032}
   m_Layer: 0
   m_Name: EnergyCell (3)
   m_TagString: Untagged
@@ -12541,7 +12993,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 1020783413}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 1749213032}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -12587,6 +13040,20 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1749213026}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!64 &1749213032
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1749213026}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1760260434
 GameObject:
@@ -13091,7 +13558,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &1802277872
 MeshFilter:
@@ -13581,7 +14048,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &1852443316
 MeshFilter:
@@ -13885,6 +14352,7 @@ GameObject:
   - component: {fileID: 1883438447}
   - component: {fileID: 1883438446}
   - component: {fileID: 1883438445}
+  - component: {fileID: 1883438448}
   m_Layer: 0
   m_Name: CompCell (1)
   m_TagString: Untagged
@@ -13924,7 +14392,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 1449595420}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 1883438448}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -13970,6 +14439,20 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1883438443}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!64 &1883438448
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1883438443}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1889967212
 GameObject:
@@ -14604,6 +15087,7 @@ GameObject:
   - component: {fileID: 1959596085}
   - component: {fileID: 1959596084}
   - component: {fileID: 1959596083}
+  - component: {fileID: 1959596087}
   m_Layer: 0
   m_Name: EnergyCell (4)
   m_TagString: Untagged
@@ -14657,7 +15141,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 526733466}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 1959596087}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -14703,6 +15188,20 @@ MeshFilter:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1959596081}
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!64 &1959596087
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1959596081}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &1963417490
 GameObject:
@@ -14887,7 +15386,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &2005128043
 MeshFilter:
@@ -15008,7 +15507,7 @@ MonoBehaviour:
   m_Script: {fileID: -706292897, guid: 45b809be76fd7a3468b6f517bced6f28, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HighlightScale: {x: 1.2, y: 0.2, z: 1.2}
+  HighlightScale: {x: 10, y: 0.2, z: 10}
   OutlineAmount: 0
 --- !u!33 &2025184822
 MeshFilter:
@@ -15576,6 +16075,7 @@ GameObject:
   - component: {fileID: 2097481274}
   - component: {fileID: 2097481276}
   - component: {fileID: 2097481277}
+  - component: {fileID: 2097481278}
   m_Layer: 0
   m_Name: EnergyCell
   m_TagString: Untagged
@@ -15656,7 +16156,8 @@ MonoBehaviour:
   IsPassThrough: 0
   ChildRowLength: 0
   Highlight: {fileID: 806907645}
-  SelectableColliders: []
+  SelectableColliders:
+  - {fileID: 2097481278}
   DefaultSelectableIndex: 0
   AllowSelectionWrapX: 0
   AllowSelectionWrapY: 0
@@ -15676,6 +16177,20 @@ MonoBehaviour:
   conduitRenderer: {fileID: 2097481274}
   displayMesh: {fileID: 405992606}
   cellSelectable: {fileID: 2097481276}
+--- !u!64 &2097481278
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 2097481272}
+  m_Material: {fileID: 0}
+  m_IsTrigger: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Convex: 1
+  m_CookingOptions: 14
+  m_SkinWidth: 0.01
+  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1 &2099022772
 GameObject:
   m_ObjectHideFlags: 0

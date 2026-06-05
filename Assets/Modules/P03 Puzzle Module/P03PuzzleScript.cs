@@ -13,15 +13,6 @@ public class P03PuzzleScript : MonoBehaviour {
 		Neg,
 		Breaker
     }
-	Dictionary<int, List<ComponentType[]>> offsetModifs = new Dictionary<int, List<ComponentType[]>> {
-		{ -2, new List<ComponentType[]> { new[] { ComponentType.Neg, ComponentType.Neg} }  },
-		{ -1, new List<ComponentType[]> { new[] { ComponentType.Neg, ComponentType.Zero} }  },
-		{ 0, new List<ComponentType[]> { new[] { ComponentType.Neg, ComponentType.Pos}, new[] { ComponentType.Zero, ComponentType.Zero} }  },
-		{ 1, new List<ComponentType[]> { new[] { ComponentType.Zero, ComponentType.Pos} }  },
-		{ 2, new List<ComponentType[]> { new[] { ComponentType.Pos, ComponentType.Pos} }  },
-
-	};
-
 
 	public KMAudio mAudio;
 	public KMBombModule modSelf;
@@ -38,6 +29,7 @@ public class P03PuzzleScript : MonoBehaviour {
 	int moduleID;
 	int length = 6, boards = 2; // Length is how long the board is, board is how many sets will need to be met to disarm the module.
 	bool submitting = false, interactable = false;
+	int idxCompSelected = -1;
 	void QuickLog(string toLog, params object[] args)
     {
 		Debug.LogFormat("[{0} #{1}] {2}", modSelf.ModuleDisplayName, moduleID, string.Format(toLog, args));
@@ -47,6 +39,24 @@ public class P03PuzzleScript : MonoBehaviour {
 	void Start () {
 		moduleID = ++modIDCnt;
 		GeneratePuzzle();
+		for (var x = 0; x < componentSelectables.Length; x++)
+        {
+			var y = x;
+			componentSelectables[x].OnInteract += delegate {
+				HandleIdxCompSelect(y);
+				return false;
+			};
+        }
+		for (var x = 0; x < puzzleCells.Length; x++)
+        {
+			var y = x;
+			puzzleCells[x].cellSelectable.OnInteract += delegate {
+				HandleIdxGridSelect(y);
+				return false;
+			};
+        }
+		submitBtn.OnInteract += delegate { HandleSubmit(); return false; };
+
 	}
 	void GeneratePuzzle()
     {
@@ -86,6 +96,7 @@ public class P03PuzzleScript : MonoBehaviour {
         QuickLog("Amount of each components: {0}", Enumerable.Range(0, allowedComponents.Length).Select(a => string.Format("[{0} = {1}]", allowedComponents[a].ToString(), initialAmountComponents[a])).Join());
 		interactable = true;
 		UpdateBoard();
+		UpdateComponentRow();
 	}
 	void UpdateBoard()
     {
@@ -98,8 +109,53 @@ public class P03PuzzleScript : MonoBehaviour {
         for (var x = 0; x < resultTexts.Length; x++)
 			resultTexts[x].text = string.Format("??\n---\n{0}", expectedPowers[x].ToString("00"));
     }
+	void UpdateComponentRow()
+    {
+		var abbrevComp = new[] { "0", "+", "-", "X", };
+        for (int n = 0; n < componentTexts.Length; n++)
+        {
+            TextMesh comText = componentTexts[n];
+            comText.color = Color.white;
+			comText.text = string.Format("{0}\n{1}", abbrevComp[n], amountComponents[n]);
+        }
+
+        if (idxCompSelected != -1)
+			componentTexts[idxCompSelected].color = Color.yellow;
+	}
+	void HandleIdxCompSelect(int idx)
+    {
+		if (!interactable) return;
+		if (idxCompSelected != idx && amountComponents[idx] > 0)
+			idxCompSelected = idx;
+		else
+			idxCompSelected = -1;
+		UpdateComponentRow();
+
+	}
+	void HandleIdxGridSelect(int idx)
+    {
+		var allowedComponents = new List<ComponentType> { ComponentType.Zero, ComponentType.Pos, ComponentType.Neg, ComponentType.Breaker, };
+		var rowIdx = idx / length;
+		var cellidx = idx % length;
+		if (idxCompSelected == -1)
+		{
+			var lastComponent = componentsPlaced[rowIdx][cellidx];
+			amountComponents[allowedComponents.IndexOf(lastComponent)]++;
+			componentsPlaced[rowIdx][cellidx] = ComponentType.Empty;
+		}
+		else
+		{
+			componentsPlaced[rowIdx][cellidx] = allowedComponents[idxCompSelected];
+			amountComponents[idxCompSelected]--;
+			if (amountComponents[idxCompSelected] <= 0)
+				idxCompSelected = -1;
+		}
+		UpdateBoard();
+		UpdateComponentRow();
+    }
 	void HandleReset()
     {
+		if (!interactable) return;
 		if (submitting)
         {
 			submitting = false;
@@ -115,8 +171,12 @@ public class P03PuzzleScript : MonoBehaviour {
 	}
 	void HandleSubmit()
     {
-		if (!submitting)
+		if (!interactable) return;
+		if (!submitting && amountComponents.All(a => a == 0))
         {
+			QuickLog("Submitted:");
+            for (var x = 0; x < boards; x++)
+				QuickLog("Board {0}: [ {1} ]", x + 1, Enumerable.Range(0, length).Select(a => componentsPlaced[x][a] == ComponentType.Empty ? initialPowersEach[x][a].ToString() : componentsPlaced[x][a].ToString()).Join(", "));
 			submitting = true;
 			interactable = false;
 			StartCoroutine(HandleSubmitAnim());
@@ -139,7 +199,21 @@ public class P03PuzzleScript : MonoBehaviour {
 					{
 						var powerOffsetObtained = (placedComps[i] == ComponentType.Pos ? 1 : placedComps[i] == ComponentType.Neg ? -1 : 0) + (placedComps[j] == ComponentType.Pos ? 1 : placedComps[j] == ComponentType.Neg ? -1 : 0);
 						foreach (var item in rangeItems.Take(rangeItems.Count() - 1).Skip(1))
+						{
 							duplicatedBoardValues[boardIdx][item] += powerOffsetObtained;
+							var lastCharSize = puzzleCells[boardIdx * length + item].displayMesh.characterSize;
+							for (float t = 0; t < 1f; t += Time.deltaTime)
+							{
+								puzzleCells[boardIdx * length + item].displayMesh.characterSize = Mathf.Lerp(lastCharSize, 1f, t);
+								yield return null;
+							}
+							for (float t = 0; t < 1f; t += Time.deltaTime)
+							{
+								puzzleCells[boardIdx * length + item].displayMesh.characterSize = Mathf.Lerp(1f, lastCharSize, t);
+								yield return null;
+							}
+							puzzleCells[boardIdx * length + item].displayMesh.characterSize = lastCharSize;
+						}
 					}
 				}
 		}
@@ -189,7 +263,7 @@ public class P03PuzzleScript : MonoBehaviour {
 					var rangeItems = Enumerable.Range(idxModifierComp[i], idxModifierComp[j] + 1 - idxModifierComp[i]);
 					if (!rangeItems.Any(a => idxBreakerComp.Contains(a))) // Check if the item in between is a breaker, including the last and first items.
 					{
-						var powerOffsetObtained = offsetModifs.Single(a => a.Value.Any(b => b.SequenceEqual(new[] { componentsPlaced[y][i], componentsPlaced[y][j] }) || b.SequenceEqual(new[] { componentsPlaced[y][j], componentsPlaced[y][i] }))).Key;
+						var powerOffsetObtained = (componentsPlaced[x][i] == ComponentType.Pos ? 1 : componentsPlaced[x][i] == ComponentType.Neg ? -1 : 0) + (componentsPlaced[x][j] == ComponentType.Pos ? 1 : componentsPlaced[x][j] == ComponentType.Neg ? -1 : 0);
 						foreach (var item in rangeItems.Take(rangeItems.Count() - 1).Skip(1))
 							finalPowersEach[item] += powerOffsetObtained;
 					}
