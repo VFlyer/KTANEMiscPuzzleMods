@@ -18,13 +18,13 @@ MonoBehaviour:
     he were to make puzzles in his life, maybe this would be his first idea.[/i]\nModules
     in this pack:\nActual 4x4x4 Sudoku (Inspired by Aaron F. Bianchi's Actual 3D Sudoku,
     original visuals by SpeakingEvil)\nInstant Insanity (Inspired by a Survivor minigame)\nPuzzle
-    Pandemonium (Module idea by Deaf)\nFoaboru (Module idea by BigCrunch22)\nFootover
-    (Module idea by Tachatat18)\nPentomino Puzzle (Module idea by Cinnabar)\n\nThis
+    Pandemonium (Module idea by Deaf)\nFoaboru (Module idea by BigCrunch22)\nPentomino
+    Puzzle (Module idea by Cinnabar)\nPair 'em (Inspired by a DS minigame)\n\nThis
     pack contains snippets of Tobu & Syndec - Dusk\r\nhttp://youtube.com/tobuofficial\r\nhttps://www.facebook.com/OfficialSyndec\r\nReleased
     by NCS https://www.youtube.com/NoCopyrightSounds\n\nModule IDs:\nActual 4x4x4
     Sudoku: actual4x4x4SudokuModule\nFoaboru: foaboruModule\nInstant Insanity: InstantInsanityModule\nPuzzle
-    Pandemonium: PuzzlePandemoniumModule\nFootover: FootoverModule\nPentomino Puzzle:
-    PentominoPuzzleModule\n"
+    Pandemonium: PuzzlePandemoniumModule\nPentomino Puzzle: PentominoPuzzleModule\nPair
+    'em: PairEmModule\n"
   version: 1.5.01
   outputFolder: build
   previewImage: {fileID: 2800000, guid: 0127196c426a5c14ea656aa5d80bbe48, type: 3}

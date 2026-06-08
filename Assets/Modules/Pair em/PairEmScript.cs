@@ -77,6 +77,11 @@ public class PairEmScript : MonoBehaviour {
 		}
 		//Debug.LogFormat("[{0}]",allowedCardPairs.Select(b => b.Join(",")).Join("];["));
 		GeneratePuzzle();
+		for (var x = 0; x < cardIdxes.Distinct().Count(); x++)
+		{
+			var cardName = usedSuits[x].name.Replace("Card", "");
+			QuickLog("Card #{0} is a{2} {1}.", x + 1, cardName, cardName.StartsWith("E") ? "n" : "");
+		}
 		QuickLog("Initial state in reading order: {0}", cardIdxes.Select(a => a + 1).Join(","));
 		QuickLog("Intended Solution: [{0}]", intendedSolutionPath.Select(a => a.Select(b => QuickCoord(b)).Join(",")).Join("];["));
 		UpdateBoard(useCurPositions: true);
@@ -141,6 +146,8 @@ public class PairEmScript : MonoBehaviour {
 				modSelf.HandleStrike();
 		}
 		cardIdxes = initialCardIdxes.ToList();
+		idxCardSelected = -1;
+		RenderCurCardHL();
 		UpdateBoard();
     }
 
@@ -213,7 +220,7 @@ public class PairEmScript : MonoBehaviour {
 		counterMesh.color = CountMovesCurState() > 0 ? Color.white : cardIdxes.Any() ? Color.red : Color.green;
 	}
 
-	void HandleCurCardHL()
+	void RenderCurCardHL()
     {
 		for (var x = 0; x < cards.Length; x++)
 		{
@@ -260,7 +267,7 @@ public class PairEmScript : MonoBehaviour {
 			else
 				idxCardSelected = idx;
 		}
-		HandleCurCardHL();
+		RenderCurCardHL();
     }
 
 	IEnumerator HandleShiftAnim(Vector3 startPos, Vector3 endPos, Transform affectedObject, float speed = 2f)
@@ -319,10 +326,16 @@ public class PairEmScript : MonoBehaviour {
 			}
 		}
 		while (cardIdxes.Distinct().Count() < preferredTypes);
-		while (cardIdxes.All(a => a > 0))
-			for (var idx = 0; idx < cardIdxes.Count; idx++)
-				cardIdxes[idx]--;
-
+		// Compact idxes so that all are indexed from 0 - # types of cards.
+		var curTypes = cardIdxes.Distinct();
+		//Debug.Log(curTypes.Distinct().Join());
+		var curTypeCnt = curTypes.Count();
+		var idxCompact = Enumerable.Range(0, curTypeCnt).ToList();
+		idxCompact.Shuffle();
+		if (!curTypes.OrderBy(a => a).SequenceEqual(Enumerable.Range(0, curTypeCnt)))
+			cardIdxes = cardIdxes.Select(a => idxCompact[curTypes.IndexOf(b => b == a)]).ToList();
+		//Debug.Log(cardIdxes.Distinct().Join());
+		// Make the initial cards the result of the cards generated from the puzzle.
 		initialCardIdxes = cardIdxes.ToList();
     }
 	
@@ -405,9 +418,10 @@ public class PairEmScript : MonoBehaviour {
 		}
 		foreach (var pair in intendedSolutionPath)
         {
-			cardSelectables[pair[0]].OnInteract();
+			var pairShuffled = pair.ToArray().Shuffle();
+			cardSelectables[pairShuffled[0]].OnInteract();
 			yield return new WaitForSeconds(0.1f);
-			cardSelectables[pair[1]].OnInteract();
+			cardSelectables[pairShuffled[1]].OnInteract();
 			yield return new WaitForSeconds(0.1f);
 		}
 
